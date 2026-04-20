@@ -1,10 +1,18 @@
 import { useState } from 'react';
+import type { Character } from '../types';
 
-export default function CharacterManager({ characters, loading, onAdd, onRemove }) {
+interface CharacterManagerProps {
+  characters: Character[];
+  loading: boolean;
+  onAdd: (id: string) => void;
+  onRemove: (id: number) => void;
+}
+
+export default function CharacterManager({ characters, loading, onAdd, onRemove }: CharacterManagerProps) {
   const [input, setInput] = useState('');
   const [adding, setAdding] = useState(false);
 
-  const handleAdd = async () => {
+  const handleAdd = () => {
     const id = input.trim();
     if (!id) return;
     setAdding(true);
@@ -13,7 +21,7 @@ export default function CharacterManager({ characters, loading, onAdd, onRemove 
     setAdding(false);
   };
 
-  const handleKeyDown = (e) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') handleAdd();
   };
 

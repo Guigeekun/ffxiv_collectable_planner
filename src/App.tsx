@@ -3,12 +3,13 @@ import { useCharacters } from './hooks/useCharacters';
 import { fetchCollectables, fetchSourceTypes } from './api/lalachievements';
 import CharacterManager from './components/CharacterManager';
 import CollectableTable from './components/CollectableTable';
+import type { Collectable, CollectableType, SourceTypeMap } from './types';
 
 export default function App() {
   const { characters, loading: charsLoading, addCharacter, removeCharacter } = useCharacters();
-  const [collectableType, setCollectableType] = useState('mounts');
-  const [collectables, setCollectables] = useState([]);
-  const [sourceTypes, setSourceTypes] = useState({});
+  const [collectableType, setCollectableType] = useState<CollectableType>('mounts');
+  const [collectables, setCollectables] = useState<Collectable[]>([]);
+  const [sourceTypes, setSourceTypes] = useState<SourceTypeMap>({});
   const [loadingData, setLoadingData] = useState(true);
 
   // Fetch source types once

@@ -5,7 +5,18 @@ import {
   getSortedRowModel,
   getFilteredRowModel,
   flexRender,
+  type SortingState,
+  type ColumnDef,
 } from '@tanstack/react-table';
+import type { Character, Collectable, CollectableRow, CollectableType, SourceTypeMap } from '../types';
+
+interface CollectableTableProps {
+  collectables: Collectable[];
+  characters: Character[];
+  sourceTypes: SourceTypeMap;
+  loading: boolean;
+  collectableType: CollectableType;
+}
 
 export default function CollectableTable({
   collectables,
@@ -13,17 +24,17 @@ export default function CollectableTable({
   sourceTypes,
   loading,
   collectableType,
-}) {
-  const [sorting, setSorting] = useState([]);
+}: CollectableTableProps) {
+  const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState('');
   const [sourceFilter, setSourceFilter] = useState('');
   const [hideOwned, setHideOwned] = useState(false);
 
   // Build ownership lookup: charId -> Set of collectable IDs
   const ownershipMap = useMemo(() => {
-    const map = {};
+    const map: Record<number, Set<number>> = {};
     for (const char of characters) {
-      const owned = char[collectableType] || [];
+      const owned = char[collectableType] as { id: number; date: number }[] || [];
       map[char.id] = new Set(owned.map((m) => m.id));
     }
     return map;
@@ -39,7 +50,7 @@ export default function CollectableTable({
 
   // Table data with missing count baked in
   const data = useMemo(() => {
-    let items = collectables.map((c) => {
+    let items: CollectableRow[] = collectables.map((c) => {
       const missingCount = characters.filter(
         (char) => !ownershipMap[char.id]?.has(c.id)
       ).length;
@@ -60,14 +71,14 @@ export default function CollectableTable({
   }, [collectables, characters, ownershipMap, sourceFilter, hideOwned]);
 
   // Column definitions
-  const columns = useMemo(() => {
-    const cols = [
+  const columns = useMemo((): ColumnDef<CollectableRow>[] => {
+    const cols: ColumnDef<CollectableRow>[] = [
       {
         accessorKey: 'name',
         header: 'Name',
         size: 220,
         cell: (info) => (
-          <span className="collectable-name">{info.getValue()}</span>
+          <span className="collectable-name">{info.getValue<string>()}</span>
         ),
       },
       {
@@ -77,7 +88,7 @@ export default function CollectableTable({
         size: 140,
         cell: (info) => (
           <span className={`source-badge source-${info.row.original.sourceTypeId}`}>
-            {info.getValue()}
+            {info.getValue<string>()}
           </span>
         ),
       },
@@ -85,27 +96,33 @@ export default function CollectableTable({
         accessorKey: 'obtainable',
         header: 'Obtainable',
         size: 100,
-        cell: (info) => (
-          <span className={info.getValue() ? 'obtainable-yes' : 'obtainable-no'}>
-            {info.getValue() ? '✓ Yes' : '✗ No'}
-          </span>
-        ),
+        cell: (info) => {
+          const val = info.getValue<boolean>();
+          return (
+            <span className={val ? 'obtainable-yes' : 'obtainable-no'}>
+              {val ? '✓ Yes' : '✗ No'}
+            </span>
+          );
+        },
       },
       {
         accessorKey: 'patch',
         header: 'Patch',
         size: 80,
-        cell: (info) => info.getValue() || '—',
+        cell: (info) => info.getValue<string | null>() || '—',
       },
       {
         accessorKey: 'howTo',
         header: 'How to Obtain',
         size: 280,
-        cell: (info) => (
-          <span className="howto-cell" title={info.getValue()}>
-            {info.getValue() || '—'}
-          </span>
-        ),
+        cell: (info) => {
+          const val = info.getValue<string | null>();
+          return (
+            <span className="howto-cell" title={val || undefined}>
+              {val || '—'}
+            </span>
+          );
+        },
       },
     ];
 
@@ -121,11 +138,14 @@ export default function CollectableTable({
         ),
         accessorFn: (row) => (ownershipMap[char.id]?.has(row.id) ? 1 : 0),
         size: 90,
-        cell: (info) => (
-          <span className={info.getValue() ? 'owned-yes' : 'owned-no'}>
-            {info.getValue() ? '✓' : '✗'}
-          </span>
-        ),
+        cell: (info) => {
+          const val = info.getValue<number>();
+          return (
+            <span className={val ? 'owned-yes' : 'owned-no'}>
+              {val ? '✓' : '✗'}
+            </span>
+          );
+        },
       });
     }
 
@@ -136,7 +156,7 @@ export default function CollectableTable({
         header: 'Missing',
         size: 80,
         cell: (info) => {
-          const v = info.getValue();
+          const v = info.getValue<number>();
           return (
             <span className={`missing-count ${v === 0 ? 'missing-zero' : v === characters.length ? 'missing-all' : ''}`}>
               {v}
@@ -149,7 +169,7 @@ export default function CollectableTable({
     return cols;
   }, [characters, ownershipMap, sourceTypes]);
 
-  const table = useReactTable({
+  const table = useReactTable<CollectableRow>({
     data,
     columns,
     state: { sorting, globalFilter },

@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { fetchCharacter } from '../api/lalachievements';
+import type { Character } from '../types';
 
 const STORAGE_KEY = 'ffxiv_char_ids';
 
-function loadIds() {
+function loadIds(): number[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     return raw ? JSON.parse(raw) : [];
@@ -12,15 +13,24 @@ function loadIds() {
   }
 }
 
-function saveIds(ids) {
+function saveIds(ids: number[]): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(ids));
 }
 
-export function useCharacters() {
-  const [charIds, setCharIds] = useState(loadIds);
-  const [characters, setCharacters] = useState([]);
+interface UseCharactersReturn {
+  characters: Character[];
+  charIds: number[];
+  loading: boolean;
+  error: string | null;
+  addCharacter: (id: number | string) => void;
+  removeCharacter: (id: number | string) => void;
+}
+
+export function useCharacters(): UseCharactersReturn {
+  const [charIds, setCharIds] = useState<number[]>(loadIds);
+  const [characters, setCharacters] = useState<Character[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   // Persist IDs
   useEffect(() => {
@@ -41,13 +51,13 @@ export function useCharacters() {
     Promise.all(charIds.map(id => fetchCharacter(id).catch(() => null)))
       .then(results => {
         if (!cancelled) {
-          setCharacters(results.filter(Boolean));
+          setCharacters(results.filter((r): r is Character => r !== null));
           setLoading(false);
         }
       })
       .catch(err => {
         if (!cancelled) {
-          setError(err.message);
+          setError(err instanceof Error ? err.message : String(err));
           setLoading(false);
         }
       });
@@ -55,13 +65,13 @@ export function useCharacters() {
     return () => { cancelled = true; };
   }, [charIds]);
 
-  const addCharacter = useCallback((id) => {
+  const addCharacter = useCallback((id: number | string) => {
     const numId = Number(id);
     if (!numId || charIds.includes(numId)) return;
     setCharIds(prev => [...prev, numId]);
   }, [charIds]);
 
-  const removeCharacter = useCallback((id) => {
+  const removeCharacter = useCallback((id: number | string) => {
     const numId = Number(id);
     setCharIds(prev => prev.filter(cid => cid !== numId));
     setCharacters(prev => prev.filter(c => c.id !== numId));
