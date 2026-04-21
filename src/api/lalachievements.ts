@@ -8,6 +8,12 @@ export async function fetchCharacter(id: number | string): Promise<Character> {
   return res.json();
 }
 
+export async function fetchCharacterRealtime(id: number | string): Promise<Character> {
+  const res = await fetch(`${BASE}/charrealtime/${id}`);
+  if (!res.ok) throw new Error(`Character ${id} not found (${res.status})`);
+  return res.json();
+}
+
 export async function fetchCollectables(type: CollectableType = 'mounts'): Promise<Collectable[]> {
   const res = await fetch(`${BASE}/game/en/${type}`);
   if (!res.ok) throw new Error(`Failed to fetch ${type}`);

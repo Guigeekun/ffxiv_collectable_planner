@@ -6,7 +6,7 @@ import CollectableTable from './components/CollectableTable';
 import type { Collectable, CollectableType, SourceTypeMap } from './types';
 
 export default function App() {
-  const { characters, loading: charsLoading, addCharacter, removeCharacter } = useCharacters();
+  const { characters, loading: charsLoading, syncing: charsSyncing, addCharacter, removeCharacter, syncCharacters } = useCharacters();
   const [collectableType, setCollectableType] = useState<CollectableType>('mounts');
   const [collectables, setCollectables] = useState<Collectable[]>([]);
   const [sourceTypes, setSourceTypes] = useState<SourceTypeMap>({});
@@ -69,8 +69,10 @@ export default function App() {
           <CharacterManager
             characters={characters}
             loading={charsLoading}
+            syncing={charsSyncing}
             onAdd={addCharacter}
             onRemove={removeCharacter}
+            onSync={syncCharacters}
           />
         </section>
 

@@ -4,11 +4,13 @@ import type { Character } from '../types';
 interface CharacterManagerProps {
   characters: Character[];
   loading: boolean;
+  syncing: boolean;
   onAdd: (id: string) => void;
   onRemove: (id: number) => void;
+  onSync: () => void;
 }
 
-export default function CharacterManager({ characters, loading, onAdd, onRemove }: CharacterManagerProps) {
+export default function CharacterManager({ characters, loading, syncing, onAdd, onRemove, onSync }: CharacterManagerProps) {
   const [input, setInput] = useState('');
   const [adding, setAdding] = useState(false);
 
@@ -19,6 +21,10 @@ export default function CharacterManager({ characters, loading, onAdd, onRemove 
     onAdd(id);
     setInput('');
     setAdding(false);
+  };
+
+  const handleSync = () => {
+    onSync();
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -67,6 +73,26 @@ export default function CharacterManager({ characters, loading, onAdd, onRemove 
             </button>
           </div>
         ))}
+        {characters.length > 0 && (
+          <div className="sync-container">
+            <button
+              id="sync-chars-btn"
+              onClick={handleSync}
+              disabled={syncing}
+              className={syncing ? 'syncing' : ''}
+            >
+              {syncing ? 'Syncing...' : '🔄 Sync All'}
+            </button>
+            <div className="tooltip-wrapper">
+              <span className="tooltip-icon">ⓘ</span>
+              <div className="tooltip-content">
+                <strong>Realtime Sync</strong>
+                <p>Fetches fresh data directly from Lodestone.</p>
+                <p className="tooltip-warning">⚠ Consumes 5 API points per character.</p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
