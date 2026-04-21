@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import {
   useReactTable,
   getCoreRowModel,
@@ -7,8 +7,116 @@ import {
   flexRender,
   type SortingState,
   type ColumnDef,
+  type ColumnFiltersState,
+  type Column,
 } from '@tanstack/react-table';
 import type { Character, Collectable, CollectableRow, CollectableType, SourceTypeMap } from '../types';
+
+interface FilterPopoverProps {
+  column: Column<CollectableRow, any>;
+  options?: { label: string; value: any }[];
+  type?: 'multi-select' | 'text';
+  title?: string;
+}
+
+function FilterPopover({ column, options, type = 'text', title }: FilterPopoverProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const popoverRef = useRef<HTMLDivElement>(null);
+  const filterValue = column.getFilterValue() as any;
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (popoverRef.current && !popoverRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isOpen]);
+
+  const filteredOptions = useMemo(() => {
+    if (!options || !search) return options;
+    return options.filter(opt => opt.label.toLowerCase().includes(search.toLowerCase()));
+  }, [options, search]);
+
+  const isFiltered = filterValue !== undefined && (Array.isArray(filterValue) ? filterValue.length > 0 : filterValue !== '');
+
+  return (
+    <div className="filter-wrapper" ref={popoverRef} onClick={(e) => e.stopPropagation()}>
+      <button
+        className={`filter-trigger ${isFiltered ? 'active' : ''}`}
+        onClick={() => setIsOpen(!isOpen)}
+        title={`Filter ${title}`}
+      >
+        <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
+          <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+        </svg>
+      </button>
+
+      {isOpen && (
+        <div className="filter-popover">
+          <div className="filter-popover-header">
+            <span>Filter {title}</span>
+            <button className="filter-close" onClick={() => setIsOpen(false)}>✕</button>
+          </div>
+          
+          {type === 'text' ? (
+            <div className="filter-popover-body">
+              <input
+                type="text"
+                className="filter-search-input"
+                placeholder="Search..."
+                value={filterValue || ''}
+                onChange={(e) => column.setFilterValue(e.target.value)}
+                autoFocus
+              />
+            </div>
+          ) : (
+            <>
+              <div className="filter-popover-toolbar">
+                <input
+                  type="text"
+                  className="filter-search-input"
+                  placeholder="Find option..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+                <div className="filter-actions">
+                  <button onClick={() => column.setFilterValue(options?.map(o => o.value))}>All</button>
+                  <button onClick={() => column.setFilterValue([])}>None</button>
+                </div>
+              </div>
+              <div className="filter-popover-body checklist">
+                {filteredOptions?.map((opt) => {
+                  const checked = Array.isArray(filterValue) && filterValue.includes(opt.value);
+                  return (
+                    <label key={opt.value} className="filter-checkbox-item">
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => {
+                          const current = (filterValue as any[]) || [];
+                          const next = checked
+                            ? current.filter(v => v !== opt.value)
+                            : [...current, opt.value];
+                          column.setFilterValue(next.length ? next : undefined);
+                        }}
+                      />
+                      <span>{opt.label}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 interface CollectableTableProps {
   collectables: Collectable[];
@@ -26,9 +134,7 @@ export default function CollectableTable({
   collectableType,
 }: CollectableTableProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
-  const [globalFilter, setGlobalFilter] = useState('');
-  const [sourceFilter, setSourceFilter] = useState('');
-  const [hideOwned, setHideOwned] = useState(false);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
   // Build ownership lookup: charId -> Set of collectable IDs
   const ownershipMap = useMemo(() => {
@@ -40,7 +146,7 @@ export default function CollectableTable({
     return map;
   }, [characters, collectableType]);
 
-  // Available source types for filter dropdown
+  // Unique values for filters
   const availableSources = useMemo(() => {
     const ids = new Set(collectables.map((c) => c.sourceTypeId));
     return [...ids]
@@ -48,34 +154,32 @@ export default function CollectableTable({
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [collectables, sourceTypes]);
 
+  const availablePatches = useMemo(() => {
+    const patches = new Set(collectables.map((c) => c.patch).filter(Boolean) as string[]);
+    return [...patches].sort((a, b) => b.localeCompare(a, undefined, { numeric: true, sensitivity: 'base' }));
+  }, [collectables]);
+
   // Table data with missing count baked in
   const data = useMemo(() => {
-    let items: CollectableRow[] = collectables.map((c) => {
+    return collectables.map((c) => {
       const missingCount = characters.filter(
         (char) => !ownershipMap[char.id]?.has(c.id)
       ).length;
       return { ...c, missingCount };
     });
-
-    // Source filter
-    if (sourceFilter) {
-      items = items.filter((c) => String(c.sourceTypeId) === sourceFilter);
-    }
-
-    // Hide fully owned
-    if (hideOwned && characters.length > 0) {
-      items = items.filter((c) => c.missingCount > 0);
-    }
-
-    return items;
-  }, [collectables, characters, ownershipMap, sourceFilter, hideOwned]);
+  }, [collectables, characters, ownershipMap]);
 
   // Column definitions
   const columns = useMemo((): ColumnDef<CollectableRow>[] => {
     const cols: ColumnDef<CollectableRow>[] = [
       {
         accessorKey: 'name',
-        header: 'Name',
+        header: ({ column }) => (
+          <div className="th-with-filter">
+            <span>Name</span>
+            <FilterPopover column={column} title="Name" type="text" />
+          </div>
+        ),
         size: 220,
         cell: (info) => (
           <span className="collectable-name">{info.getValue<string>()}</span>
@@ -83,19 +187,50 @@ export default function CollectableTable({
       },
       {
         id: 'source',
-        accessorFn: (row) => sourceTypes[row.sourceTypeId] || 'Unknown',
-        header: 'Source',
-        size: 140,
-        cell: (info) => (
-          <span className={`source-badge source-${info.row.original.sourceTypeId}`}>
-            {info.getValue<string>()}
-          </span>
+        accessorFn: (row) => row.sourceTypeId,
+        header: ({ column }) => (
+          <div className="th-with-filter">
+            <span>Source</span>
+            <FilterPopover 
+              column={column} 
+              title="Source" 
+              type="multi-select" 
+              options={availableSources.map(s => ({ label: s.name, value: s.id }))} 
+            />
+          </div>
         ),
+        size: 140,
+        filterFn: (row, columnId, filterValue) => {
+          if (!filterValue || filterValue.length === 0) return true;
+          return filterValue.includes(row.getValue(columnId));
+        },
+        cell: (info) => {
+          const id = info.getValue<number>();
+          return (
+            <span className={`source-badge source-${id}`}>
+              {sourceTypes[id] || 'Unknown'}
+            </span>
+          );
+        },
       },
       {
         accessorKey: 'obtainable',
-        header: 'Obtainable',
+        header: ({ column }) => (
+          <div className="th-with-filter">
+            <span>Obtainable</span>
+            <FilterPopover 
+              column={column} 
+              title="Obtainable" 
+              type="multi-select" 
+              options={[{ label: '✓ Yes', value: true }, { label: '✗ No', value: false }]} 
+            />
+          </div>
+        ),
         size: 100,
+        filterFn: (row, columnId, filterValue) => {
+          if (!filterValue || filterValue.length === 0) return true;
+          return filterValue.includes(row.getValue(columnId));
+        },
         cell: (info) => {
           const val = info.getValue<boolean>();
           return (
@@ -107,13 +242,32 @@ export default function CollectableTable({
       },
       {
         accessorKey: 'patch',
-        header: 'Patch',
+        header: ({ column }) => (
+          <div className="th-with-filter">
+            <span>Patch</span>
+            <FilterPopover 
+              column={column} 
+              title="Patch" 
+              type="multi-select" 
+              options={availablePatches.map(p => ({ label: p, value: p }))} 
+            />
+          </div>
+        ),
         size: 80,
+        filterFn: (row, columnId, filterValue) => {
+          if (!filterValue || filterValue.length === 0) return true;
+          return filterValue.includes(row.getValue(columnId));
+        },
         cell: (info) => info.getValue<string | null>() || '—',
       },
       {
         accessorKey: 'howTo',
-        header: 'How to Obtain',
+        header: ({ column }) => (
+          <div className="th-with-filter">
+            <span>How to Obtain</span>
+            <FilterPopover column={column} title="Obtain" type="text" />
+          </div>
+        ),
         size: 280,
         cell: (info) => {
           const val = info.getValue<string | null>();
@@ -130,14 +284,29 @@ export default function CollectableTable({
     for (const char of characters) {
       cols.push({
         id: `char_${char.id}`,
-        header: () => (
+        header: ({ column }) => (
           <div className="char-col-header" title={`${char.name} — ${char.worldName}`}>
             <img src={char.iconUrl} alt={char.name} className="char-col-avatar" />
-            <span className="char-col-name">{char.name.split(' ')[0]}</span>
+            <div className="th-with-filter">
+              <span className="char-col-name">{char.name.split(' ')[0]}</span>
+              <FilterPopover 
+                column={column} 
+                title={char.name} 
+                type="multi-select" 
+                options={[
+                  { label: 'Owned', value: 1 },
+                  { label: 'Missing', value: 0 }
+                ]}
+              />
+            </div>
           </div>
         ),
         accessorFn: (row) => (ownershipMap[char.id]?.has(row.id) ? 1 : 0),
         size: 90,
+        filterFn: (row, columnId, filterValue) => {
+          if (!filterValue || filterValue.length === 0) return true;
+          return filterValue.includes(row.getValue(columnId));
+        },
         cell: (info) => {
           const val = info.getValue<number>();
           return (
@@ -153,8 +322,22 @@ export default function CollectableTable({
     if (characters.length > 0) {
       cols.push({
         accessorKey: 'missingCount',
-        header: 'Missing',
+        header: ({ column }) => (
+          <div className="th-with-filter">
+            <span>Missing</span>
+            <FilterPopover 
+              column={column} 
+              title="Missing" 
+              type="multi-select" 
+              options={Array.from({ length: characters.length + 1 }, (_, i) => ({ label: String(i), value: i }))} 
+            />
+          </div>
+        ),
         size: 80,
+        filterFn: (row, columnId, filterValue) => {
+          if (!filterValue || filterValue.length === 0) return true;
+          return filterValue.includes(row.getValue(columnId));
+        },
         cell: (info) => {
           const v = info.getValue<number>();
           return (
@@ -167,14 +350,14 @@ export default function CollectableTable({
     }
 
     return cols;
-  }, [characters, ownershipMap, sourceTypes]);
+  }, [characters, ownershipMap, sourceTypes, availableSources, availablePatches]);
 
   const table = useReactTable<CollectableRow>({
     data,
     columns,
-    state: { sorting, globalFilter },
+    state: { sorting, columnFilters },
     onSortingChange: setSorting,
-    onGlobalFilterChange: setGlobalFilter,
+    onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
@@ -192,37 +375,16 @@ export default function CollectableTable({
   return (
     <div className="table-container">
       <div className="table-toolbar">
-        <input
-          id="global-filter"
-          type="text"
-          placeholder={`Search ${collectableType}...`}
-          value={globalFilter}
-          onChange={(e) => setGlobalFilter(e.target.value)}
-          className="search-input"
-        />
-        <select
-          id="source-filter"
-          value={sourceFilter}
-          onChange={(e) => setSourceFilter(e.target.value)}
-          className="source-select"
-        >
-          <option value="">All Sources</option>
-          {availableSources.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.name}
-            </option>
-          ))}
-        </select>
-        {characters.length > 0 && (
-          <label className="hide-owned-toggle">
-            <input
-              type="checkbox"
-              checked={hideOwned}
-              onChange={(e) => setHideOwned(e.target.checked)}
-            />
-            <span>Hide fully owned</span>
-          </label>
-        )}
+        <div className="active-filters-summary">
+          {columnFilters.length > 0 && (
+            <button
+              className="clear-all-filters"
+              onClick={() => setColumnFilters([])}
+            >
+              ✕ Clear all filters
+            </button>
+          )}
+        </div>
         <span className="table-count">
           {table.getRowModel().rows.length} / {collectables.length} {collectableType}
         </span>
@@ -236,16 +398,20 @@ export default function CollectableTable({
                 {headerGroup.headers.map((header) => (
                   <th
                     key={header.id}
-                    onClick={header.column.getToggleSortingHandler()}
                     style={{ width: header.getSize() }}
                     className={header.column.getCanSort() ? 'sortable' : ''}
                   >
                     <div className="th-content">
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(header.column.columnDef.header, header.getContext())}
-                      {header.column.getIsSorted() === 'asc' && ' ↑'}
-                      {header.column.getIsSorted() === 'desc' && ' ↓'}
+                      <div 
+                        className="th-label"
+                        onClick={header.column.getToggleSortingHandler()}
+                      >
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(header.column.columnDef.header, header.getContext())}
+                        {header.column.getIsSorted() === 'asc' && ' ↑'}
+                        {header.column.getIsSorted() === 'desc' && ' ↓'}
+                      </div>
                     </div>
                   </th>
                 ))}
