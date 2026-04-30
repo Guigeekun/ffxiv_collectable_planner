@@ -9,6 +9,16 @@ export interface CharacterMinion {
   date: number;
 }
 
+export interface CharacterTitle {
+  id: number;
+  date: number;
+}
+
+export interface CharacterAchievement {
+  id: number;
+  date: number;
+}
+
 export interface Character {
   id: number;
   name: string;
@@ -30,6 +40,8 @@ export interface Character {
   genderName: string;
   mounts: CharacterMount[];
   minions: CharacterMinion[];
+  titles: CharacterTitle[];
+  achievements: CharacterAchievement[];
   [key: string]: unknown;
 }
 
@@ -64,4 +76,4 @@ export interface SourceType {
 export type SourceTypeMap = Record<number, string>;
 
 // Collectable type toggle
-export type CollectableType = 'mounts' | 'minions';
+export type CollectableType = 'mounts' | 'minions' | 'titles' | 'achievements';

@@ -4,10 +4,14 @@ import {
   getCoreRowModel,
   getSortedRowModel,
   getFilteredRowModel,
+  getGroupedRowModel,
+  getExpandedRowModel,
   flexRender,
   type SortingState,
   type ColumnDef,
   type ColumnFiltersState,
+  type GroupingState,
+  type ExpandedState,
   type Column,
 } from '@tanstack/react-table';
 import type { Character, Collectable, CollectableRow, CollectableType, SourceTypeMap } from '../types';
@@ -135,13 +139,35 @@ export default function CollectableTable({
 }: CollectableTableProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [grouping, setGrouping] = useState<GroupingState>([]);
+  const [expanded, setExpanded] = useState<ExpandedState>({});
+
+  // Auto-group achievements by source
+  useEffect(() => {
+    if (collectableType === 'achievements') {
+      setGrouping(['source']);
+      setExpanded(true); // Expand all by default
+    } else {
+      setGrouping([]);
+    }
+  }, [collectableType]);
 
   // Build ownership lookup: charId -> Set of collectable IDs
   const ownershipMap = useMemo(() => {
     const map: Record<number, Set<number>> = {};
+    // Titles are derived from achievements in the character cache
+    const typeToLookUp = collectableType === 'titles' ? 'achievements' : collectableType;
+    
     for (const char of characters) {
-      const owned = char[collectableType] as { id: number; date: number }[] || [];
-      map[char.id] = new Set(owned.map((m) => m.id));
+      const owned = (char[typeToLookUp] as any[]) || [];
+      // Handle cases where the API returns primitives or objects with different ID keys
+      const ownedIds = owned.map((m: any) => {
+        if (typeof m === 'object' && m !== null) {
+          return m.id ?? m.titleId ?? m.title_id ?? m.achievementId ?? m;
+        }
+        return m;
+      });
+      map[char.id] = new Set(ownedIds);
     }
     return map;
   }, [characters, collectableType]);
@@ -162,12 +188,13 @@ export default function CollectableTable({
   // Table data with missing count baked in
   const data = useMemo(() => {
     return collectables.map((c) => {
+      const idToCheck = (collectableType === 'titles' ? (c.achievementId as number) : (c.id as number));
       const missingCount = characters.filter(
-        (char) => !ownershipMap[char.id]?.has(c.id)
+        (char) => !ownershipMap[char.id]?.has(idToCheck)
       ).length;
       return { ...c, missingCount };
     });
-  }, [collectables, characters, ownershipMap]);
+  }, [collectables, characters, ownershipMap, collectableType]);
 
   // Column definitions
   const columns = useMemo((): ColumnDef<CollectableRow>[] => {
@@ -181,19 +208,40 @@ export default function CollectableTable({
           </div>
         ),
         size: 220,
-        cell: (info) => (
-          <span className="collectable-name">{info.getValue<string>()}</span>
-        ),
+        cell: (info) => {
+          const name = info.getValue<string>();
+          const row = info.row.original;
+          if (collectableType === 'titles') {
+            const isPrefix = row.isPrefix as boolean;
+            return (
+              <span className="collectable-name title-name">
+                {isPrefix && <span className="title-indicator prefix">...</span>}
+                {name}
+                {!isPrefix && <span className="title-indicator suffix">...</span>}
+              </span>
+            );
+          }
+          if (collectableType === 'achievements') {
+            const isLegacy = row.notLegacy === false;
+            return (
+              <span className="collectable-name achievement-name">
+                {name}
+                {isLegacy && <span className="legacy-badge">Legacy</span>}
+              </span>
+            );
+          }
+          return <span className="collectable-name">{name}</span>;
+        },
       },
       {
         id: 'source',
         accessorFn: (row) => row.sourceTypeId,
         header: ({ column }) => (
           <div className="th-with-filter">
-            <span>Source</span>
+            <span>{collectableType === 'achievements' ? 'Category' : 'Source'}</span>
             <FilterPopover 
               column={column} 
-              title="Source" 
+              title={collectableType === 'achievements' ? 'Category' : 'Source'} 
               type="multi-select" 
               options={availableSources.map(s => ({ label: s.name, value: s.id }))} 
             />
@@ -264,7 +312,7 @@ export default function CollectableTable({
         accessorKey: 'howTo',
         header: ({ column }) => (
           <div className="th-with-filter">
-            <span>How to Obtain</span>
+            <span>{collectableType === 'titles' ? 'Gender Variation' : 'How to Obtain'}</span>
             <FilterPopover column={column} title="Obtain" type="text" />
           </div>
         ),
@@ -279,6 +327,63 @@ export default function CollectableTable({
         },
       },
     ];
+
+    // Add legacy filter column for achievements (hidden, just for filtering)
+    if (collectableType === 'achievements') {
+      cols.splice(1, 0, {
+        id: 'legacy',
+        accessorFn: (row) => (row.notLegacy === false ? 'legacy' : 'nonlegacy'),
+        header: ({ column }) => (
+          <div className="th-with-filter">
+            <span>Legacy</span>
+            <FilterPopover
+              column={column}
+              title="Legacy"
+              type="multi-select"
+              options={[
+                { label: '🏛 Legacy', value: 'legacy' },
+                { label: '✦ Non-Legacy', value: 'nonlegacy' },
+              ]}
+            />
+          </div>
+        ),
+        size: 100,
+        filterFn: (row, columnId, filterValue) => {
+          if (!filterValue || filterValue.length === 0) return true;
+          return filterValue.includes(row.getValue(columnId));
+        },
+        cell: (info) => {
+          const val = info.getValue<string>();
+          return val === 'legacy'
+            ? <span className="legacy-badge">Legacy</span>
+            : <span className="nonlegacy-label">—</span>;
+        },
+      });
+    }
+
+    // Add Points column for achievements
+    if (collectableType === 'achievements') {
+      cols.splice(1, 0, {
+        accessorKey: 'points',
+        header: ({ column }) => (
+          <div className="th-with-filter">
+            <span>Points</span>
+            <FilterPopover 
+              column={column} 
+              title="Points" 
+              type="multi-select" 
+              options={[5, 10, 15, 20, 30, 50].map(p => ({ label: String(p), value: p }))} 
+            />
+          </div>
+        ),
+        size: 80,
+        filterFn: (row, columnId, filterValue) => {
+          if (!filterValue || filterValue.length === 0) return true;
+          return filterValue.includes(row.getValue(columnId));
+        },
+        cell: (info) => <span className="achievement-points">{info.getValue<number>()}</span>,
+      });
+    }
 
     // Per-character ownership columns
     for (const char of characters) {
@@ -301,7 +406,10 @@ export default function CollectableTable({
             </div>
           </div>
         ),
-        accessorFn: (row) => (ownershipMap[char.id]?.has(row.id) ? 1 : 0),
+        accessorFn: (row) => {
+          const idToCheck = (collectableType === 'titles' ? (row.achievementId as number) : (row.id as number));
+          return ownershipMap[char.id]?.has(idToCheck) ? 1 : 0;
+        },
         size: 90,
         filterFn: (row, columnId, filterValue) => {
           if (!filterValue || filterValue.length === 0) return true;
@@ -355,12 +463,16 @@ export default function CollectableTable({
   const table = useReactTable<CollectableRow>({
     data,
     columns,
-    state: { sorting, columnFilters },
+    state: { sorting, columnFilters, grouping, expanded },
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
+    onGroupingChange: setGrouping,
+    onExpandedChange: setExpanded,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
+    getGroupedRowModel: getGroupedRowModel(),
+    getExpandedRowModel: getExpandedRowModel(),
   });
 
   if (loading) {
@@ -420,10 +532,26 @@ export default function CollectableTable({
           </thead>
           <tbody>
             {table.getRowModel().rows.map((row) => (
-              <tr key={row.id}>
+              <tr key={row.id} className={row.getIsGrouped() ? 'group-row' : ''}>
                 {row.getVisibleCells().map((cell) => (
                   <td key={cell.id} style={{ width: cell.column.getSize() }}>
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    {cell.getIsGrouped() ? (
+                      <div
+                        className="group-header-cell"
+                        style={{ cursor: 'pointer', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}
+                        onClick={row.getToggleExpandedHandler()}
+                      >
+                        <span className={`expand-icon ${row.getIsExpanded() ? 'expanded' : ''}`}>
+                          {row.getIsExpanded() ? '▼' : '▶'}
+                        </span>
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        <span className="group-count">({row.subRows.length})</span>
+                      </div>
+                    ) : cell.getIsAggregated() ? (
+                      flexRender(cell.column.columnDef.aggregatedCell ?? cell.column.columnDef.cell, cell.getContext())
+                    ) : cell.getIsPlaceholder() ? null : (
+                      flexRender(cell.column.columnDef.cell, cell.getContext())
+                    )}
                   </td>
                 ))}
               </tr>

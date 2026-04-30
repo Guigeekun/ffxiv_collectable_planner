@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useCharacters } from './hooks/useCharacters';
-import { fetchCollectables, fetchSourceTypes } from './api/lalachievements';
+import { fetchCollectables, fetchSourceTypes, fetchAchievementCategories } from './api/lalachievements';
 import CharacterManager from './components/CharacterManager';
 import CollectableTable from './components/CollectableTable';
 import type { Collectable, CollectableType, SourceTypeMap } from './types';
@@ -10,13 +10,17 @@ export default function App() {
   const [collectableType, setCollectableType] = useState<CollectableType>('mounts');
   const [collectables, setCollectables] = useState<Collectable[]>([]);
   const [sourceTypes, setSourceTypes] = useState<SourceTypeMap>({});
+  const [achievementCategories, setAchievementCategories] = useState<SourceTypeMap>({});
   const [loadingData, setLoadingData] = useState(true);
 
   // Fetch source types once
   useEffect(() => {
-    fetchSourceTypes()
-      .then(setSourceTypes)
-      .catch((err) => console.error('Failed to load source types:', err));
+    Promise.all([fetchSourceTypes(), fetchAchievementCategories()])
+      .then(([st, ac]) => {
+        setSourceTypes(st);
+        setAchievementCategories(ac);
+      })
+      .catch((err) => console.error('Failed to load categories:', err));
   }, []);
 
   // Fetch collectables when type changes
@@ -33,6 +37,12 @@ export default function App() {
       });
   }, [collectableType]);
 
+  const activeSourceTypes = (() => {
+    if (collectableType === 'achievements') return achievementCategories;
+    if (collectableType === 'titles') return { 1: 'Achievement' };
+    return sourceTypes;
+  })();
+
   return (
     <div className="app">
       <header className="app-header">
@@ -42,7 +52,7 @@ export default function App() {
               <span className="header-icon">✦</span>
               FFXIV Collectable Planner
             </h1>
-            <p className="header-subtitle">Track your mount &amp; minion collection across characters</p>
+            <p className="header-subtitle">Track your mount, minion, title &amp; achievement collection across characters</p>
           </div>
           <div className="type-toggle">
             <button
@@ -58,6 +68,20 @@ export default function App() {
               onClick={() => setCollectableType('minions')}
             >
               🐣 Minions
+            </button>
+            <button
+              id="toggle-titles"
+              className={`toggle-btn ${collectableType === 'titles' ? 'active' : ''}`}
+              onClick={() => setCollectableType('titles')}
+            >
+              👑 Titles
+            </button>
+            <button
+              id="toggle-achievements"
+              className={`toggle-btn ${collectableType === 'achievements' ? 'active' : ''}`}
+              onClick={() => setCollectableType('achievements')}
+            >
+              🏆 Achievements
             </button>
           </div>
         </div>
@@ -80,7 +104,7 @@ export default function App() {
           <CollectableTable
             collectables={collectables}
             characters={characters}
-            sourceTypes={sourceTypes}
+            sourceTypes={activeSourceTypes}
             loading={loadingData}
             collectableType={collectableType}
           />
