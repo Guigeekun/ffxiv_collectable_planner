@@ -1,0 +1,16 @@
+{
+    # Global options
+}
+
+:80 {
+    root * /usr/share/caddy
+    file_server
+
+    # API Proxy (matching vite.config.ts)
+    reverse_proxy /api/* https://lalachievements.com {
+        header_up Host lalachievements.com
+    }
+
+    # SPA Fallback
+    try_files {path} /index.html
+}

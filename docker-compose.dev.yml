@@ -1,0 +1,26 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    # Port 5173 is internal, Caddy will proxy to it
+
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ./Caddyfile.dev:/etc/caddy/Caddyfile
+      - caddy_dev_data:/data
+      - caddy_dev_config:/config
+    depends_on:
+      - app
+
+volumes:
+  caddy_dev_data:
+  caddy_dev_config:

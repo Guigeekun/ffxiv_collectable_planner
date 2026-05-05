@@ -128,7 +128,6 @@ body {
 
 /* ===== MAIN ===== */
 .app-main {
-  max-width: 1600px;
   margin: 0 auto;
   padding: 1.5rem 2rem 3rem;
 }

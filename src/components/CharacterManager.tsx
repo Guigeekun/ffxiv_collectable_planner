@@ -46,54 +46,56 @@ export default function CharacterManager({ characters, loading, syncing, onAdd, 
         <button id="add-char-btn" onClick={handleAdd} disabled={adding || !input.trim()}>
           {adding ? 'Adding...' : '+ Add Character'}
         </button>
-      </div>
 
-      {loading && characters.length === 0 && (
-        <div className="char-loading">Loading characters...</div>
-      )}
 
-      <div className="char-cards">
-        {characters.map((char) => (
-          <div key={char.id} className="char-card">
-            <img
-              src={char.iconUrl}
-              alt={char.name}
-              className="char-avatar"
-            />
-            <div className="char-info">
-              <span className="char-name">{char.name}</span>
-              <span className="char-world">{char.worldName} · {char.dcName}</span>
+        {loading && characters.length === 0 && (
+          <div className="char-loading">Loading characters...</div>
+        )}
+
+        <div className="char-cards">
+          {characters.map((char) => (
+            <div key={char.id} className="char-card">
+              <img
+                src={char.iconUrl}
+                alt={char.name}
+                className="char-avatar"
+              />
+              <div className="char-info">
+                <span className="char-name">{char.name}</span>
+                <span className="char-world">{char.worldName} · {char.dcName}</span>
+              </div>
+              <button
+                className="char-remove-btn"
+                onClick={() => onRemove(char.id)}
+                title="Remove character"
+              >
+                ✕
+              </button>
             </div>
-            <button
-              className="char-remove-btn"
-              onClick={() => onRemove(char.id)}
-              title="Remove character"
-            >
-              ✕
-            </button>
-          </div>
-        ))}
-        {characters.length > 0 && (
-          <div className="sync-container">
-            <button
-              id="sync-chars-btn"
-              onClick={handleSync}
-              disabled={syncing}
-              className={syncing ? 'syncing' : ''}
-            >
-              {syncing ? 'Syncing...' : '🔄 Sync All'}
-            </button>
-            <div className="tooltip-wrapper">
-              <span className="tooltip-icon">ⓘ</span>
-              <div className="tooltip-content">
-                <strong>Realtime Sync</strong>
-                <p>Fetches fresh data directly from Lodestone.</p>
-                <p className="tooltip-warning">⚠ Consumes 5 API points per character.</p>
+          ))}
+          {characters.length > 0 && (
+            <div className="sync-container">
+              <button
+                id="sync-chars-btn"
+                onClick={handleSync}
+                disabled={syncing}
+                className={syncing ? 'syncing' : ''}
+              >
+                {syncing ? 'Syncing...' : '🔄 Sync All'}
+              </button>
+              <div className="tooltip-wrapper">
+                <span className="tooltip-icon">ⓘ</span>
+                <div className="tooltip-content">
+                  <strong>Realtime Sync</strong>
+                  <p>Fetches fresh data directly from Lodestone.</p>
+                  <p className="tooltip-warning">⚠ Consumes 5 API points per character.</p>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
+
   );
 }
