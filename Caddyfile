@@ -3,14 +3,37 @@
 }
 
 :80 {
+    log {
+        output stdout
+    }
+
     root * /usr/share/caddy
     file_server
 
     # API Proxy (matching vite.config.ts)
-    reverse_proxy /api/* https://lalachievements.com {
-        header_up Host lalachievements.com
+    # Using handle to ensure it catches all /api/ requests correctly
+    handle /api/* {
+        reverse_proxy https://lalachievements.com {
+            header_up Host lalachievements.com
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            
+            # Strip cookies from upstream to avoid Firefox "cross-origin" confusion
+            header_down -Set-Cookie
+            
+            # Dynamic CORS to support any deployment domain (localhost, public IP, or domain)
+            header_down Access-Control-Allow-Origin {header.Origin}
+            header_down Access-Control-Allow-Credentials "true"
+
+            transport http {
+                tls_server_name lalachievements.com
+            }
+        }
     }
 
     # SPA Fallback
-    try_files {path} /index.html
+    handle {
+        try_files {path} /index.html
+        file_server
+    }
 }

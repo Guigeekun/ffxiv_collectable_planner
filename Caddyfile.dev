@@ -4,17 +4,19 @@
 }
 
 :80 {
-    # Reverse proxy to Vite dev server
-    reverse_proxy app:5173
+    handle /api/* {
+        reverse_proxy https://lalachievements.com {
+            header_up Host lalachievements.com
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            transport http {
+                tls_server_name lalachievements.com
+            }
+        }
+    }
 
-    # API Proxy (matching vite.config.ts)
-    # Note: Vite dev server also has this proxy, but if we hit Caddy directly
-    # for everything, we might want it here too. 
-    # However, since Caddy proxies EVERYTHING to Vite, Vite's proxy will handle it.
-    # But if we want Caddy to handle it directly (e.g. for performance or consistency),
-    # we can define it before the Vite proxy.
-    
-    reverse_proxy /api/* https://lalachievements.com {
-        header_up Host lalachievements.com
+    # Reverse proxy to Vite dev server
+    handle {
+        reverse_proxy app:5173
     }
 }
