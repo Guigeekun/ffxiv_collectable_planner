@@ -491,6 +491,10 @@ th {
   letter-spacing: 0.04em;
 }
 
+tr:nth-child(odd) {
+  background-color: var(--bg-tertiary);
+}
+
 th.sortable {
   cursor: pointer;
 }
