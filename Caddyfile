@@ -1,17 +1,22 @@
-{
-    # Global options
-}
-
-:80 {
+ffxivcollect.ggkfigment.fr {
     log {
         output stdout
     }
 
     root * /usr/share/caddy
+    encode gzip
     file_server
 
+    header {
+        # Security headers
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        X-XSS-Protection "1; mode=block"
+        Referrer-Policy "strict-origin-when-cross-origin"
+    }
+
     # API Proxy (matching vite.config.ts)
-    # Using handle to ensure it catches all /api/ requests correctly
     handle /api/* {
         reverse_proxy https://lalachievements.com {
             header_up Host lalachievements.com
@@ -21,7 +26,7 @@
             # Strip cookies from upstream to avoid Firefox "cross-origin" confusion
             header_down -Set-Cookie
             
-            # Dynamic CORS to support any deployment domain (localhost, public IP, or domain)
+            # Dynamic CORS to support any deployment domain
             header_down Access-Control-Allow-Origin {header.Origin}
             header_down Access-Control-Allow-Credentials "true"
 

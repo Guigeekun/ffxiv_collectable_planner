@@ -2,6 +2,8 @@
 
 Tool to plan your next collectable farm for your party.
 
+Live demo: [https://ffxivcollect.ggkfigment.fr](https://ffxivcollect.ggkfigment.fr)
+
 ## Features
 
 This tool allows you to see which collectables (mounts or minions) your party members have and which ones they don't have, and then plan your next collectable farm accordingly.
