@@ -56,6 +56,8 @@ export interface Collectable {
   sort: number;
   updatedAt: number;
   deleted: boolean | null;
+  iconUrl?: string;
+  globalOwned?: string;
   [key: string]: unknown;
 }
 

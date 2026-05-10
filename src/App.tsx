@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useCharacters } from './hooks/useCharacters';
 import { fetchCollectables, fetchSourceTypes, fetchAchievementCategories } from './api/lalachievements';
+import { fetchMountData, fetchMinionData, FFXIVCollectData } from './api/ffxivcollect';
 import CharacterManager from './components/CharacterManager';
 import CollectableTable from './components/CollectableTable';
 import type { Collectable, CollectableType, SourceTypeMap } from './types';
@@ -11,9 +12,11 @@ export default function App() {
   const [collectables, setCollectables] = useState<Collectable[]>([]);
   const [sourceTypes, setSourceTypes] = useState<SourceTypeMap>({});
   const [achievementCategories, setAchievementCategories] = useState<SourceTypeMap>({});
+  const [mountData, setMountData] = useState<Record<number, FFXIVCollectData>>({});
+  const [minionData, setMinionData] = useState<Record<number, FFXIVCollectData>>({});
   const [loadingData, setLoadingData] = useState(true);
 
-  // Fetch source types once
+  // Fetch source types and mount icons once
   useEffect(() => {
     Promise.all([fetchSourceTypes(), fetchAchievementCategories()])
       .then(([st, ac]) => {
@@ -21,6 +24,14 @@ export default function App() {
         setAchievementCategories(ac);
       })
       .catch((err) => console.error('Failed to load categories:', err));
+
+    fetchMountData()
+      .then(setMountData)
+      .catch((err) => console.error('Failed to load mount data:', err));
+
+    fetchMinionData()
+      .then(setMinionData)
+      .catch((err) => console.error('Failed to load minion data:', err));
   }, []);
 
   // Fetch collectables when type changes
@@ -42,6 +53,24 @@ export default function App() {
     if (collectableType === 'titles') return { 1: 'Achievement' };
     return sourceTypes;
   })();
+
+  const enrichedCollectables = useMemo(() => {
+    if (collectableType === 'mounts') {
+      return collectables.map(c => ({
+        ...c,
+        iconUrl: mountData[c.id as number]?.icon,
+        globalOwned: mountData[c.id as number]?.owned
+      }));
+    }
+    if (collectableType === 'minions') {
+      return collectables.map(c => ({
+        ...c,
+        iconUrl: minionData[c.id as number]?.icon,
+        globalOwned: minionData[c.id as number]?.owned
+      }));
+    }
+    return collectables;
+  }, [collectables, collectableType, mountData, minionData]);
 
   return (
     <div className="app">
@@ -102,7 +131,7 @@ export default function App() {
 
         <section className="table-section">
           <CollectableTable
-            collectables={collectables}
+            collectables={enrichedCollectables}
             characters={characters}
             sourceTypes={activeSourceTypes}
             loading={loadingData}

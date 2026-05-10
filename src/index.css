@@ -711,6 +711,16 @@ tbody tr:hover {
 .collectable-name {
   font-weight: 500;
   text-transform: capitalize;
+  display: flex;
+  align-items: center;
+}
+
+.collectable-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  margin-right: 8px;
+  object-fit: contain;
 }
 
 /* Source badge */
@@ -1098,5 +1108,55 @@ tbody tr:hover {
 }
 
 .nonlegacy-label {
+  color: var(--text-muted);
+}
+
+.global-owned-badge {
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.85em;
+  font-weight: 600;
+  display: inline-block;
+  text-align: center;
+  min-width: 48px;
+}
+
+.global-owned-legendary {
+  background-color: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.global-owned-epic {
+  background-color: rgba(168, 85, 247, 0.15);
+  color: #c084fc;
+  border: 1px solid rgba(168, 85, 247, 0.3);
+}
+
+.global-owned-rare {
+  background-color: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.global-owned-uncommon {
+  background-color: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.global-owned-common {
+  background-color: rgba(156, 163, 175, 0.15);
+  color: #d1d5db;
+  border: 1px solid rgba(156, 163, 175, 0.3);
+}
+
+.global-owned-very-common {
+  background-color: rgba(107, 114, 128, 0.15);
+  color: #9ca3af;
+  border: 1px solid rgba(107, 114, 128, 0.3);
+}
+
+.global-owned-unknown {
   color: var(--text-muted);
 }

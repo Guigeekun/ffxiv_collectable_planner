@@ -66,7 +66,7 @@ function FilterPopover({ column, options, type = 'text', title }: FilterPopoverP
             <span>Filter {title}</span>
             <button className="filter-close" onClick={() => setIsOpen(false)}>✕</button>
           </div>
-          
+
           {type === 'text' ? (
             <div className="filter-popover-body">
               <input
@@ -157,7 +157,7 @@ export default function CollectableTable({
     const map: Record<number, Set<number>> = {};
     // Titles are derived from achievements in the character cache
     const typeToLookUp = collectableType === 'titles' ? 'achievements' : collectableType;
-    
+
     for (const char of characters) {
       const owned = (char[typeToLookUp] as any[]) || [];
       // Handle cases where the API returns primitives or objects with different ID keys
@@ -230,7 +230,12 @@ export default function CollectableTable({
               </span>
             );
           }
-          return <span className="collectable-name">{name}</span>;
+          return (
+            <span className="collectable-name">
+              {row.iconUrl && <img src={row.iconUrl as string} alt="" className="collectable-icon" />}
+              {name}
+            </span>
+          );
         },
       },
       {
@@ -239,11 +244,11 @@ export default function CollectableTable({
         header: ({ column }) => (
           <div className="th-with-filter">
             <span>{collectableType === 'achievements' ? 'Category' : 'Source'}</span>
-            <FilterPopover 
-              column={column} 
-              title={collectableType === 'achievements' ? 'Category' : 'Source'} 
-              type="multi-select" 
-              options={availableSources.map(s => ({ label: s.name, value: s.id }))} 
+            <FilterPopover
+              column={column}
+              title={collectableType === 'achievements' ? 'Category' : 'Source'}
+              type="multi-select"
+              options={availableSources.map(s => ({ label: s.name, value: s.id }))}
             />
           </div>
         ),
@@ -266,11 +271,11 @@ export default function CollectableTable({
         header: ({ column }) => (
           <div className="th-with-filter">
             <span>Obtainable</span>
-            <FilterPopover 
-              column={column} 
-              title="Obtainable" 
-              type="multi-select" 
-              options={[{ label: '✓ Yes', value: true }, { label: '✗ No', value: false }]} 
+            <FilterPopover
+              column={column}
+              title="Obtainable"
+              type="multi-select"
+              options={[{ label: '✓ Yes', value: true }, { label: '✗ No', value: false }]}
             />
           </div>
         ),
@@ -293,11 +298,11 @@ export default function CollectableTable({
         header: ({ column }) => (
           <div className="th-with-filter">
             <span>Patch</span>
-            <FilterPopover 
-              column={column} 
-              title="Patch" 
-              type="multi-select" 
-              options={availablePatches.map(p => ({ label: p, value: p }))} 
+            <FilterPopover
+              column={column}
+              title="Patch"
+              type="multi-select"
+              options={availablePatches.map(p => ({ label: p, value: p }))}
             />
           </div>
         ),
@@ -327,6 +332,42 @@ export default function CollectableTable({
         },
       },
     ];
+
+    // Add Global Owned column for mounts and minions right after Patch
+    if (collectableType === 'mounts' || collectableType === 'minions') {
+      const patchIdx = cols.findIndex(c => (c as any).accessorKey === 'patch');
+      if (patchIdx !== -1) {
+        cols.splice(patchIdx + 1, 0, {
+          accessorKey: 'globalOwned',
+          header: ({ column }) => (
+            <div className="th-with-filter">
+              <span>Global Owned</span>
+              <FilterPopover 
+                column={column} 
+                title="Global Owned" 
+                type="text" 
+              />
+            </div>
+          ),
+          size: 130,
+          cell: (info) => {
+            const val = info.getValue<string | undefined>();
+            if (!val) return <span className="global-owned-unknown">—</span>;
+            
+            const numVal = parseFloat(val);
+            let colorClass = 'global-owned-common';
+            if (numVal < 1) colorClass = 'global-owned-legendary';
+            else if (numVal < 5) colorClass = 'global-owned-epic';
+            else if (numVal < 15) colorClass = 'global-owned-rare';
+            else if (numVal < 30) colorClass = 'global-owned-uncommon';
+            else if (numVal < 60) colorClass = 'global-owned-common';
+            else colorClass = 'global-owned-very-common';
+            
+            return <span className={`global-owned-badge ${colorClass}`}>{val}</span>;
+          },
+        });
+      }
+    }
 
     // Add legacy filter column for achievements (hidden, just for filtering)
     if (collectableType === 'achievements') {
@@ -368,11 +409,11 @@ export default function CollectableTable({
         header: ({ column }) => (
           <div className="th-with-filter">
             <span>Points</span>
-            <FilterPopover 
-              column={column} 
-              title="Points" 
-              type="multi-select" 
-              options={[5, 10, 15, 20, 30, 50].map(p => ({ label: String(p), value: p }))} 
+            <FilterPopover
+              column={column}
+              title="Points"
+              type="multi-select"
+              options={[5, 10, 15, 20, 30, 50].map(p => ({ label: String(p), value: p }))}
             />
           </div>
         ),
@@ -394,10 +435,10 @@ export default function CollectableTable({
             <img src={char.iconUrl} alt={char.name} className="char-col-avatar" />
             <div className="th-with-filter">
               <span className="char-col-name">{char.name.split(' ')[0]}</span>
-              <FilterPopover 
-                column={column} 
-                title={char.name} 
-                type="multi-select" 
+              <FilterPopover
+                column={column}
+                title={char.name}
+                type="multi-select"
                 options={[
                   { label: 'Owned', value: 1 },
                   { label: 'Missing', value: 0 }
@@ -433,11 +474,11 @@ export default function CollectableTable({
         header: ({ column }) => (
           <div className="th-with-filter">
             <span>Missing</span>
-            <FilterPopover 
-              column={column} 
-              title="Missing" 
-              type="multi-select" 
-              options={Array.from({ length: characters.length + 1 }, (_, i) => ({ label: String(i), value: i }))} 
+            <FilterPopover
+              column={column}
+              title="Missing"
+              type="multi-select"
+              options={Array.from({ length: characters.length + 1 }, (_, i) => ({ label: String(i), value: i }))}
             />
           </div>
         ),
@@ -453,7 +494,7 @@ export default function CollectableTable({
               {v}
             </span>
           );
-        },
+        }
       });
     }
 
@@ -514,7 +555,7 @@ export default function CollectableTable({
                     className={header.column.getCanSort() ? 'sortable' : ''}
                   >
                     <div className="th-content">
-                      <div 
+                      <div
                         className="th-label"
                         onClick={header.column.getToggleSortingHandler()}
                       >
