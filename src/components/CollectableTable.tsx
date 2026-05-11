@@ -16,6 +16,62 @@ import {
 } from '@tanstack/react-table';
 import type { Character, Collectable, CollectableRow, CollectableType, SourceTypeMap } from '../types';
 
+function ColumnVisibilityPopover({ table }: { table: any }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const popoverRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (popoverRef.current && !popoverRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    if (isOpen) document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isOpen]);
+
+  return (
+    <div className="visibility-wrapper" ref={popoverRef} onClick={(e) => e.stopPropagation()}>
+      <button
+        className={`toolbar-btn visibility-trigger ${isOpen ? 'active' : ''}`}
+        onClick={() => setIsOpen(!isOpen)}
+        title="Show/Hide Columns"
+      >
+        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+          <line x1="1" y1="1" x2="23" y2="23"></line>
+        </svg>
+      </button>
+
+      {isOpen && (
+        <div className="filter-popover visibility-popover">
+          <div className="filter-popover-header">
+            <span>Show/Hide Columns</span>
+            <button className="filter-close" onClick={() => setIsOpen(false)}>✕</button>
+          </div>
+          <div className="filter-popover-body checklist">
+            {table.getAllLeafColumns().map((column: any) => {
+              const label = column.columnDef.meta?.label || column.id;
+              if (column.id === 'name') return null; // Always show name
+              
+              return (
+                <label key={column.id} className="filter-checkbox-item">
+                  <input
+                    type="checkbox"
+                    checked={column.getIsVisible()}
+                    onChange={column.getToggleVisibilityHandler()}
+                  />
+                  <span>{label}</span>
+                </label>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 interface FilterPopoverProps {
   column: Column<CollectableRow, any>;
   options?: { label: string; value: any }[];
@@ -141,6 +197,29 @@ export default function CollectableTable({
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [grouping, setGrouping] = useState<GroupingState>([]);
   const [expanded, setExpanded] = useState<ExpandedState>({});
+  
+  // Persistent column visibility map for all types
+  const [visibilityMap, setVisibilityMap] = useState<Record<string, Record<string, boolean>>>(() => {
+    const map: Record<string, any> = {};
+    ['mounts', 'minions', 'titles', 'achievements'].forEach(t => {
+      try {
+        const saved = localStorage.getItem(`ffxiv_col_visibility_${t}`);
+        if (saved) map[t] = JSON.parse(saved);
+      } catch {}
+    });
+    return map;
+  });
+
+  const columnVisibility = visibilityMap[collectableType] || {};
+  
+  const handleColumnVisibilityChange = (updaterOrValue: any) => {
+    const nextValue = typeof updaterOrValue === 'function' 
+      ? updaterOrValue(columnVisibility) 
+      : updaterOrValue;
+      
+    setVisibilityMap(prev => ({ ...prev, [collectableType]: nextValue }));
+    localStorage.setItem(`ffxiv_col_visibility_${collectableType}`, JSON.stringify(nextValue));
+  };
 
   // Auto-group achievements by source
   useEffect(() => {
@@ -208,6 +287,7 @@ export default function CollectableTable({
           </div>
         ),
         size: 220,
+        meta: { label: 'Name' },
         cell: (info) => {
           const name = info.getValue<string>();
           const row = info.row.original;
@@ -253,6 +333,7 @@ export default function CollectableTable({
           </div>
         ),
         size: 140,
+        meta: { label: collectableType === 'achievements' ? 'Category' : 'Source' },
         filterFn: (row, columnId, filterValue) => {
           if (!filterValue || filterValue.length === 0) return true;
           return filterValue.includes(row.getValue(columnId));
@@ -280,6 +361,7 @@ export default function CollectableTable({
           </div>
         ),
         size: 100,
+        meta: { label: 'Obtainable' },
         filterFn: (row, columnId, filterValue) => {
           if (!filterValue || filterValue.length === 0) return true;
           return filterValue.includes(row.getValue(columnId));
@@ -307,6 +389,7 @@ export default function CollectableTable({
           </div>
         ),
         size: 80,
+        meta: { label: 'Patch' },
         filterFn: (row, columnId, filterValue) => {
           if (!filterValue || filterValue.length === 0) return true;
           return filterValue.includes(row.getValue(columnId));
@@ -322,6 +405,7 @@ export default function CollectableTable({
           </div>
         ),
         size: 280,
+        meta: { label: collectableType === 'titles' ? 'Gender Variation' : 'How to Obtain' },
         cell: (info) => {
           const val = info.getValue<string | null>();
           return (
@@ -350,6 +434,7 @@ export default function CollectableTable({
             </div>
           ),
           size: 130,
+          meta: { label: 'Global Owned' },
           cell: (info) => {
             const val = info.getValue<string | undefined>();
             if (!val) return <span className="global-owned-unknown">—</span>;
@@ -389,6 +474,7 @@ export default function CollectableTable({
           </div>
         ),
         size: 100,
+        meta: { label: 'Legacy Filter' },
         filterFn: (row, columnId, filterValue) => {
           if (!filterValue || filterValue.length === 0) return true;
           return filterValue.includes(row.getValue(columnId));
@@ -418,6 +504,7 @@ export default function CollectableTable({
           </div>
         ),
         size: 80,
+        meta: { label: 'Points' },
         filterFn: (row, columnId, filterValue) => {
           if (!filterValue || filterValue.length === 0) return true;
           return filterValue.includes(row.getValue(columnId));
@@ -452,6 +539,7 @@ export default function CollectableTable({
           return ownershipMap[char.id]?.has(idToCheck) ? 1 : 0;
         },
         size: 90,
+        meta: { label: `Char: ${char.name}` },
         filterFn: (row, columnId, filterValue) => {
           if (!filterValue || filterValue.length === 0) return true;
           return filterValue.includes(row.getValue(columnId));
@@ -483,6 +571,7 @@ export default function CollectableTable({
           </div>
         ),
         size: 80,
+        meta: { label: 'Missing Count' },
         filterFn: (row, columnId, filterValue) => {
           if (!filterValue || filterValue.length === 0) return true;
           return filterValue.includes(row.getValue(columnId));
@@ -499,16 +588,17 @@ export default function CollectableTable({
     }
 
     return cols;
-  }, [characters, ownershipMap, sourceTypes, availableSources, availablePatches]);
+  }, [characters, ownershipMap, sourceTypes, availableSources, availablePatches, collectableType]);
 
   const table = useReactTable<CollectableRow>({
     data,
     columns,
-    state: { sorting, columnFilters, grouping, expanded },
+    state: { sorting, columnFilters, grouping, expanded, columnVisibility },
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onGroupingChange: setGrouping,
     onExpandedChange: setExpanded,
+    onColumnVisibilityChange: handleColumnVisibilityChange,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
@@ -537,6 +627,7 @@ export default function CollectableTable({
               ✕ Clear all filters
             </button>
           )}
+          <ColumnVisibilityPopover table={table} />
         </div>
         <span className="table-count">
           {table.getRowModel().rows.length} / {collectables.length} {collectableType}
