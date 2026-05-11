@@ -52,19 +52,32 @@ export function useCharacters(): UseCharactersReturn {
     setLoading(true);
     setError(null);
 
-    Promise.all(charIds.map(id => fetchCharacter(id).catch(() => null)))
-      .then(results => {
-        if (!cancelled) {
-          setCharacters(results.filter((r): r is Character => r !== null));
-          setLoading(false);
+    const fetchAll = async () => {
+      const results: (Character | null)[] = [];
+      for (let i = 0; i < charIds.length; i++) {
+        if (cancelled) return;
+        
+        // Add a small delay between requests (stagger)
+        if (i > 0) {
+          await new Promise(resolve => setTimeout(resolve, 150));
         }
-      })
-      .catch(err => {
-        if (!cancelled) {
-          setError(err instanceof Error ? err.message : String(err));
-          setLoading(false);
-        }
-      });
+        
+        const res = await fetchCharacter(charIds[i]).catch(() => null);
+        results.push(res);
+      }
+
+      if (!cancelled) {
+        setCharacters(results.filter((r): r is Character => r !== null));
+        setLoading(false);
+      }
+    };
+
+    fetchAll().catch(err => {
+      if (!cancelled) {
+        setError(err instanceof Error ? err.message : String(err));
+        setLoading(false);
+      }
+    });
 
     return () => { cancelled = true; };
   }, [charIds]);
@@ -93,20 +106,24 @@ export function useCharacters(): UseCharactersReturn {
     
     try {
       const { fetchCharacterRealtime } = await import('../api/lalachievements');
-      const results = await Promise.all(
-        charIds.map(async (id) => {
-          try {
-            const char = await fetchCharacterRealtime(id);
-            successCount++;
-            return char;
-          } catch (err: any) {
-            if (err.message?.includes('429')) {
-              rateLimited = true;
-            }
-            return null;
+      const results: (Character | null)[] = [];
+      for (let i = 0; i < charIds.length; i++) {
+        const id = charIds[i];
+        if (i > 0) {
+          await new Promise(resolve => setTimeout(resolve, 150));
+        }
+        
+        try {
+          const char = await fetchCharacterRealtime(id);
+          successCount++;
+          results.push(char);
+        } catch (err: any) {
+          if (err.message?.includes('429')) {
+            rateLimited = true;
           }
-        })
-      );
+          results.push(null);
+        }
+      }
       
       const updatedChars = results.filter((r): r is Character => r !== null);
       if (updatedChars.length > 0) {

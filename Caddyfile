@@ -22,9 +22,7 @@ ffxivcollect.ggkfigment.fr {
             header_up Host lalachievements.com
             header_up X-Real-IP {remote_host}
             header_up X-Forwarded-For {remote_host}
-            
-            # Strip cookies from upstream to avoid Firefox "cross-origin" confusion
-            header_down -Set-Cookie
+            header_up X-Forwarded-Host {host}
             
             # Dynamic CORS to support any deployment domain
             header_down Access-Control-Allow-Origin {header.Origin}
