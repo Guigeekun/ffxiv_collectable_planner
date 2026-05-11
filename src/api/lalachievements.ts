@@ -14,6 +14,20 @@ export async function fetchCharacterRealtime(id: number | string): Promise<Chara
   return res.json();
 }
 
+export interface CharacterSearchResult {
+  id: number;
+  name: string;
+  iconUrl: string;
+  worldId: number;
+}
+
+export async function searchCharacters(text: string): Promise<CharacterSearchResult[]> {
+  const res = await fetch(`${BASE}/charsearch/${encodeURIComponent(text)}`);
+  if (!res.ok) throw new Error(`Search failed (${res.status})`);
+  const data = await res.json();
+  return data.results || [];
+}
+
 export async function fetchCollectables(type: CollectableType = 'mounts'): Promise<Collectable[]> {
   const res = await fetch(`${BASE}/game/en/${type}`);
   if (!res.ok) throw new Error(`Failed to fetch ${type}`);
