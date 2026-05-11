@@ -193,33 +193,55 @@ export default function CollectableTable({
   loading,
   collectableType,
 }: CollectableTableProps) {
-  const [sorting, setSorting] = useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [grouping, setGrouping] = useState<GroupingState>([]);
-  const [expanded, setExpanded] = useState<ExpandedState>({});
-  
-  // Persistent column visibility map for all types
-  const [visibilityMap, setVisibilityMap] = useState<Record<string, Record<string, boolean>>>(() => {
+  // Unified persistent state map
+  const [tableStateMap, setTableStateMap] = useState<Record<string, {
+    sorting: SortingState;
+    filters: ColumnFiltersState;
+    visibility: Record<string, boolean>;
+  }>>(() => {
     const map: Record<string, any> = {};
     ['mounts', 'minions', 'titles', 'achievements'].forEach(t => {
       try {
-        const saved = localStorage.getItem(`ffxiv_col_visibility_${t}`);
-        if (saved) map[t] = JSON.parse(saved);
-      } catch {}
+        const sorting = localStorage.getItem(`ffxiv_sorting_${t}`);
+        const filters = localStorage.getItem(`ffxiv_filters_${t}`);
+        const visibility = localStorage.getItem(`ffxiv_col_visibility_${t}`);
+        map[t] = {
+          sorting: sorting ? JSON.parse(sorting) : [],
+          filters: filters ? JSON.parse(filters) : [],
+          visibility: visibility ? JSON.parse(visibility) : {}
+        };
+      } catch {
+        map[t] = { sorting: [], filters: [], visibility: {} };
+      }
     });
     return map;
   });
 
-  const columnVisibility = visibilityMap[collectableType] || {};
-  
-  const handleColumnVisibilityChange = (updaterOrValue: any) => {
-    const nextValue = typeof updaterOrValue === 'function' 
-      ? updaterOrValue(columnVisibility) 
-      : updaterOrValue;
-      
-    setVisibilityMap(prev => ({ ...prev, [collectableType]: nextValue }));
-    localStorage.setItem(`ffxiv_col_visibility_${collectableType}`, JSON.stringify(nextValue));
+  const { sorting, filters: columnFilters, visibility: columnVisibility } = tableStateMap[collectableType] || {
+    sorting: [],
+    filters: [],
+    visibility: {}
   };
+
+  const updateTableState = (key: 'sorting' | 'filters' | 'visibility', updaterOrValue: any) => {
+    setTableStateMap(prev => {
+      const current = prev[collectableType] || { sorting: [], filters: [], visibility: {} };
+      const nextValue = typeof updaterOrValue === 'function' 
+        ? updaterOrValue(current[key]) 
+        : updaterOrValue;
+      
+      const nextState = { ...current, [key]: nextValue };
+      localStorage.setItem(`ffxiv_${key === 'visibility' ? 'col_visibility' : key}_${collectableType}`, JSON.stringify(nextValue));
+      return { ...prev, [collectableType]: nextState };
+    });
+  };
+
+  const setSorting = (v: any) => updateTableState('sorting', v);
+  const setColumnFilters = (v: any) => updateTableState('filters', v);
+  const handleColumnVisibilityChange = (v: any) => updateTableState('visibility', v);
+
+  const [grouping, setGrouping] = useState<GroupingState>([]);
+  const [expanded, setExpanded] = useState<ExpandedState>({});
 
   // Auto-group achievements by source
   useEffect(() => {
