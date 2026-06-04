@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useCharacters } from './hooks/useCharacters';
-import { fetchCollectables, fetchSourceTypes, fetchAchievementCategories } from './api/lalachievements';
+import { fetchCollectables, fetchSourceTypes } from './api/lalachievements';
+import { fetchAchievementCategories } from './api/xivapi';
 import { fetchMountData, fetchMinionData, FFXIVCollectData } from './api/ffxivcollect';
 import CharacterManager from './components/CharacterManager';
 import CollectableTable from './components/CollectableTable';
