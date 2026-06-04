@@ -77,10 +77,10 @@ export default function App() {
       <header className="app-header">
         <div className="header-content">
           <div className="header-left">
-            <h1>
-              <span className="header-icon">✦</span>
-              FFXIV Collectable Planner
-            </h1>
+            <div className="header-branding">
+              <img src="/ffxivggkcollect.png" alt="FFXIV GGK Collect" className="header-logo" />
+              <h1>GGK Figment - FFXIV Collectable Planner</h1>
+            </div>
             <p className="header-subtitle">Track your mount, minion, title &amp; achievement collection across characters</p>
           </div>
           <div className="type-toggle">

@@ -1,12 +1,13 @@
-# FFXIV Collectable Planner
+![FFXIV Collectable Planner](public/ffxivggkcollect.png)
+# GGK Figment - FFXIV Collectable Planner
 
-Tool to plan your next collectable farm for your party.
+Tool to plan your next collectable farm for your party in Final Fantasy XIV.
 
 Live demo: [https://ffxivcollect.ggkfigment.fr](https://ffxivcollect.ggkfigment.fr)
 
 ## Features
 
-This tool allows you to see which collectables (mounts or minions) your party members have and which ones they don't have, and then plan your next collectable farm accordingly.
+This tool allows you to see which collectables (mounts or minions) your party members have and which ones they don't have then plan your next collectable farm accordingly.
 
 ## Getting Started
 

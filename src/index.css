@@ -84,6 +84,18 @@ body {
   background-clip: text;
 }
 
+.header-branding {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.header-logo {
+  height: 32px;
+  width: auto;
+  object-fit: contain;
+}
+
 .header-icon {
   margin-right: 0.4rem;
 }
