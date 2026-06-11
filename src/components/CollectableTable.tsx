@@ -14,7 +14,9 @@ import {
   type ExpandedState,
   type Column,
 } from '@tanstack/react-table';
-import type { Character, Collectable, CollectableRow, CollectableType, SourceTypeMap } from '../types';
+import type { Character, Collectable, CollectableRow, CollectableType, SourceTypeMap, AchievementView } from '../types';
+import type { RelicWeaponEntry } from '../api/ffxivcollect';
+import AchievementsWeaponsView from './AchievementsWeaponsView';
 
 function ColumnVisibilityPopover({ table }: { table: any }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -184,6 +186,8 @@ interface CollectableTableProps {
   sourceTypes: SourceTypeMap;
   loading: boolean;
   collectableType: CollectableType;
+  relicWeaponsData?: Record<number, RelicWeaponEntry>;
+  achievementCategories?: SourceTypeMap;
 }
 
 export default function CollectableTable({
@@ -192,7 +196,18 @@ export default function CollectableTable({
   sourceTypes,
   loading,
   collectableType,
+  relicWeaponsData = {},
+  achievementCategories = {},
 }: CollectableTableProps) {
+  const [achievementView, setAchievementView] = useState<AchievementView>('all');
+
+  // Reset view to 'all' when switching away from achievements
+  useEffect(() => {
+    if (collectableType !== 'achievements') {
+      setAchievementView('all');
+    }
+  }, [collectableType]);
+
   // Unified persistent state map
   const [tableStateMap, setTableStateMap] = useState<Record<string, {
     sorting: SortingState;
@@ -637,10 +652,63 @@ export default function CollectableTable({
     );
   }
 
+  // Weapons sub-view for achievements
+  if (collectableType === 'achievements' && achievementView === 'weapons') {
+    return (
+      <div className="table-container">
+        <div className="table-toolbar">
+          <div className="active-filters-summary">
+            <div className="achievement-view-switcher">
+              <button
+                id="ach-view-all"
+                className={`view-switch-btn ${achievementView === 'all' ? 'active' : ''}`}
+                onClick={() => setAchievementView('all')}
+              >
+                📋 All
+              </button>
+              <button
+                id="ach-view-weapons"
+                className={`view-switch-btn ${achievementView === 'weapons' ? 'active' : ''}`}
+                onClick={() => setAchievementView('weapons')}
+              >
+                ⚔️ Weapons
+              </button>
+            </div>
+          </div>
+        </div>
+        <AchievementsWeaponsView
+          collectables={collectables}
+          characters={characters}
+          achievementCategories={achievementCategories}
+          relicWeaponsData={relicWeaponsData}
+          loading={loading}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="table-container">
       <div className="table-toolbar">
         <div className="active-filters-summary">
+          {collectableType === 'achievements' && (
+            <div className="achievement-view-switcher">
+              <button
+                id="ach-view-all"
+                className={`view-switch-btn ${achievementView === 'all' ? 'active' : ''}`}
+                onClick={() => setAchievementView('all')}
+              >
+                📋 All
+              </button>
+              <button
+                id="ach-view-weapons"
+                className={`view-switch-btn ${achievementView === 'weapons' ? 'active' : ''}`}
+                onClick={() => setAchievementView('weapons')}
+              >
+                ⚔️ Weapons
+              </button>
+            </div>
+          )}
           {columnFilters.length > 0 && (
             <button
               className="clear-all-filters"

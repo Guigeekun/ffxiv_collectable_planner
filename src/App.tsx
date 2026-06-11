@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useCharacters } from './hooks/useCharacters';
 import { fetchCollectables, fetchSourceTypes } from './api/lalachievements';
 import { fetchAchievementCategories } from './api/xivapi';
-import { fetchMountData, fetchMinionData, FFXIVCollectData } from './api/ffxivcollect';
+import { fetchMountData, fetchMinionData, fetchRelicWeaponsData, type FFXIVCollectData, type RelicWeaponEntry } from './api/ffxivcollect';
 import CharacterManager from './components/CharacterManager';
 import CollectableTable from './components/CollectableTable';
 import type { Collectable, CollectableType, SourceTypeMap } from './types';
@@ -15,6 +15,7 @@ export default function App() {
   const [achievementCategories, setAchievementCategories] = useState<SourceTypeMap>({});
   const [mountData, setMountData] = useState<Record<number, FFXIVCollectData>>({});
   const [minionData, setMinionData] = useState<Record<number, FFXIVCollectData>>({});
+  const [relicWeaponsData, setRelicWeaponsData] = useState<Record<number, RelicWeaponEntry>>({});
   const [loadingData, setLoadingData] = useState(true);
 
   // Fetch source types and mount icons once
@@ -33,6 +34,10 @@ export default function App() {
     fetchMinionData()
       .then(setMinionData)
       .catch((err) => console.error('Failed to load minion data:', err));
+
+    fetchRelicWeaponsData()
+      .then(setRelicWeaponsData)
+      .catch((err) => console.error('Failed to load relic weapons data:', err));
   }, []);
 
   // Fetch collectables when type changes
@@ -137,6 +142,8 @@ export default function App() {
             sourceTypes={activeSourceTypes}
             loading={loadingData}
             collectableType={collectableType}
+            relicWeaponsData={relicWeaponsData}
+            achievementCategories={achievementCategories}
           />
         </section>
       </main>

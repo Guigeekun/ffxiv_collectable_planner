@@ -2,8 +2,16 @@ import type { Character, Collectable, SourceType, SourceTypeMap, CollectableType
 
 const BASE = '/api';
 
+const API_HEADERS: HeadersInit = {
+  'User-Agent': 'ggkfigment',
+};
+
 async function fetchWithRetry(url: string, options?: RequestInit, retries = 1): Promise<Response> {
-  const res = await fetch(url, options);
+  const mergedOptions: RequestInit = {
+    ...options,
+    headers: { ...API_HEADERS, ...(options?.headers as Record<string, string> ?? {}) },
+  };
+  const res = await fetch(url, mergedOptions);
   if (res.status === 403 && retries > 0) {
     // If we get a 403, it might be a Cloudflare challenge. 
     // Wait a bit and retry once, in case a parallel request set a cookie.
