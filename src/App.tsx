@@ -5,6 +5,7 @@ import { fetchAchievementCategories } from './api/xivapi';
 import { fetchMountData, fetchMinionData, fetchRelicWeaponsData, type FFXIVCollectData, type RelicWeaponEntry } from './api/ffxivcollect';
 import CharacterManager from './components/CharacterManager';
 import CollectableTable from './components/CollectableTable';
+import ProfilePanel from './components/ProfilePanel';
 import type { Collectable, CollectableType, SourceTypeMap } from './types';
 
 export default function App() {
@@ -147,6 +148,8 @@ export default function App() {
           />
         </section>
       </main>
+
+      <ProfilePanel />
     </div>
   );
 }
