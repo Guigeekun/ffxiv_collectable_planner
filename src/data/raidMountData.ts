@@ -1,12 +1,5 @@
-/**
- * Static data for raid mounts, organized by expansion and raid tier.
- *
- * Mount IDs come from the FFXIV Collect API (mounts[].id).
- * Instance IDs (instanceId) match FFXIV Collect's sources[].related_id.
- * shortName is a brief human-readable boss/raid identifier used as the column header.
- *
- * Source: https://ffxivcollect.com/api/mounts
- */
+import type { Collectable } from '../types';
+import type { GridGroup, GridColumn, GridCell } from '../seriesGridData';
 
 export interface RaidFight {
   /** Full raid fight name (shown as a tooltip in the grid). */
@@ -156,3 +149,54 @@ export const RAID_MOUNTS_BY_EXPANSION: RaidExpansion[] = [
     ],
   },
 ];
+
+/**
+ * Transforms mount collectables + static RAID_MOUNTS_BY_EXPANSION data into
+ * the generic GridGroup[] format for SeriesGridView.
+ *
+ * Groups by expansion → raid fight (columns) → mount slot (rows).
+ */
+export function buildRaidMountGroups(collectables: Collectable[]): GridGroup[] {
+  const mountMap = new Map<number, Collectable>();
+  for (const m of collectables) mountMap.set(m.id, m);
+
+  return RAID_MOUNTS_BY_EXPANSION.map((expansion) => {
+    const maxMounts = Math.max(...expansion.fights.map((f) => f.mountIds.length), 1);
+    const rowLabels = Array.from({ length: maxMounts }, () => '');
+
+    const columns: GridColumn[] = expansion.fights.map((fight) => ({
+      key: String(fight.instanceId),
+      header: fight.shortName,
+      title: fight.name,
+    }));
+
+    const cells = new Map<string, Array<GridCell | null>>();
+    for (const fight of expansion.fights) {
+      cells.set(
+        String(fight.instanceId),
+        Array.from({ length: maxMounts }, (_, i) => {
+          const mountId = fight.mountIds[i];
+          if (mountId === undefined) return null;
+          const mount = mountMap.get(mountId);
+          if (!mount) return null;
+          return {
+            collectableId: mountId,
+            label: mount.name,
+            icon: (mount as any).iconUrl ?? undefined,
+            globalOwned: (mount as any).globalOwned ?? undefined,
+          };
+        }),
+      );
+    }
+
+    return {
+      key: expansion.expansion,
+      title: expansion.expansion,
+      expansionLabel: expansion.expansion,
+      expansionClass: expansion.expansionClass,
+      rowLabels,
+      columns,
+      cells,
+    };
+  });
+}

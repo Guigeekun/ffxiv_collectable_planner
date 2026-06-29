@@ -1,4 +1,4 @@
-import { RELIC_SERIES, ALL_STAGE_SUFFIXES } from '../relicWeaponData';
+import { RELIC_SERIES, ALL_STAGE_SUFFIXES } from '../data/relicWeaponData';
 
 const FFXIV_COLLECT_BASE = 'https://ffxivcollect.com/api';
 

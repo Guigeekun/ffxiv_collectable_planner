@@ -2,7 +2,10 @@ import { useMemo } from 'react';
 import type { Character, Collectable, CollectableType, SourceTypeMap } from '../types';
 import type { RelicWeaponEntry } from '../api/ffxivcollect';
 import type { ViewDefinition } from '../views/types';
-import { buildRelicWeaponGroups, buildTrialMountGroups, buildRaidMountGroups, buildReputationAchievementGroups } from '../seriesGridData';
+import { buildRelicWeaponGroups } from '../data/relicWeaponData';
+import { buildTrialMountGroups } from '../data/trialMountData';
+import { buildRaidMountGroups } from '../data/raidMountData';
+import { buildReputationAchievementGroups } from '../data/reputationAchievementData';
 import CollectableTable from './CollectableTable';
 import SeriesGridView from './SeriesGridView';
 

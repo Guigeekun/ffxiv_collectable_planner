@@ -962,3 +962,86 @@ export const REPUTATION_ACHIEVEMENTS_BY_EXPANSION: ReputationExpansion[] = [
     "alliedQuest": null
   }
 ];
+
+
+import type { Collectable } from '../types';
+import type { GridGroup, GridColumn, GridCell } from '../seriesGridData';
+
+/**
+ * Transforms reputation achievements + static REPUTATION_ACHIEVEMENTS_BY_EXPANSION data into
+ * the generic GridGroup[] format for SeriesGridView.
+ *
+ * Groups by expansion → allied society (columns) → milestones (rows).
+ */
+export function buildReputationAchievementGroups(collectables: Collectable[]): GridGroup[] {
+  const achMap = new Map<number, Collectable>();
+  for (const c of collectables) achMap.set(c.id, c);
+
+  return REPUTATION_ACHIEVEMENTS_BY_EXPANSION.map((expansion) => {
+    const numRows = 4;
+    const rowLabels = ['Tier 1', 'Tier 2', 'Tier 3', 'Tier 4'];
+
+    const columns: GridColumn[] = expansion.societies.map((soc) => ({
+      key: soc.id,
+      header: soc.name,
+      title: `${soc.group} (${soc.name})`,
+    }));
+
+    if (expansion.alliedQuest) {
+      columns.push({
+        key: 'allied',
+        header: 'Allied',
+        title: `Allied Quest: ${expansion.alliedQuest.name}`,
+      });
+    }
+
+    const cells = new Map<string, Array<GridCell | null>>();
+
+    for (const soc of expansion.societies) {
+      cells.set(
+        soc.id,
+        Array.from({ length: numRows }, (_, i) => {
+          const achTemplate = soc.achments[i];
+          if (!achTemplate) return null;
+          const collectable = achMap.get(achTemplate.id);
+          return {
+            collectableId: achTemplate.id,
+            label: achTemplate.name,
+            icon: collectable?.iconUrl ?? achTemplate.icon,
+            globalOwned: collectable?.globalOwned ?? achTemplate.owned,
+          };
+        })
+      );
+    }
+
+    if (expansion.alliedQuest) {
+      const q = expansion.alliedQuest;
+      const collectable = achMap.get(q.id);
+      cells.set(
+        'allied',
+        Array.from({ length: numRows }, (_, i) => {
+          // Allied Quest sits on the bottom row (Tier 4) of its column
+          if (i === 3) {
+            return {
+              collectableId: q.id,
+              label: q.name,
+              icon: collectable?.iconUrl ?? q.icon,
+              globalOwned: collectable?.globalOwned ?? q.owned,
+            };
+          }
+          return null;
+        })
+      );
+    }
+
+    return {
+      key: expansion.expansion,
+      title: expansion.expansion,
+      expansionLabel: expansion.expansion,
+      expansionClass: expansion.expansionClass,
+      rowLabels,
+      columns,
+      cells,
+    };
+  });
+}

@@ -1,3 +1,8 @@
+import type { Collectable } from '../types';
+import type { RelicWeaponEntry } from '../api/ffxivcollect';
+import type { GridGroup, GridColumn, GridCell } from '../seriesGridData';
+import { expansionName, expansionCssClass } from '../seriesGridData';
+
 /**
  * Shared relic weapon data — single source of truth for both the API layer
  * (ffxivcollect.ts) and the UI (AchievementsWeaponsView.tsx).
@@ -67,15 +72,11 @@ export const RELIC_SERIES: Record<string, RelicSeriesData> = {
     suffixes: ['Padjali'],
   },
   'Cosmic Tools': {
-    // 11 jobs: 8 DoH (CRP BSM ARM GSM LTW WVR ALC CUL) + 3 DoL (MIN BTN FSH)
-    // 4 stages × 11 jobs = 44 relics, orders 1-44
     jobs: ['CRP', 'BSM', 'ARM', 'GSM', 'LTW', 'WVR', 'ALC', 'CUL', 'MIN', 'BTN', 'FSH'],
     stages: ['Cosmic', 'Stellar', 'Hyper', 'Stars'],
     suffixes: ['Cosmic', 'Stellar', 'Hyper', 'Stars'],
   },
   'Splendorous Tools': {
-    // 11 jobs: 8 DoH (CRP BSM ARM GSM LTW WVR ALC CUL) + 3 DoL (MIN BTN FSH)
-    // 3 achievement-granting stages (Crystalline, Brilliant, Lodestar) × 11 jobs = 33 achievements.
     jobs: ['CRP', 'BSM', 'ARM', 'GSM', 'LTW', 'WVR', 'ALC', 'CUL', 'MIN', 'BTN', 'FSH'],
     stages: ['Crystalline', 'Brilliant', 'Lodestar'],
     suffixes: ['Crystalline', 'Brilliant', 'Lodestar'],
@@ -85,7 +86,6 @@ export const RELIC_SERIES: Record<string, RelicSeriesData> = {
     stages: ['Skysung', 'Skybuilders'],
     suffixes: ['Skysung', 'Skybuilders'],
   },
-  // ── Ultimate Raids ─────────────────────────────────────────────────────────
   'The Unending Coil of Bahamut': {
     jobs: ['PLD', 'WAR', 'WHM', 'SCH', 'MNK', 'DRG', 'NIN', 'BRD', 'BLM', 'SMN', 'AST', 'MCH', 'DRK', 'SAM', 'RDM'],
     stages: ['Ultimate'],
@@ -116,7 +116,6 @@ export const RELIC_SERIES: Record<string, RelicSeriesData> = {
     stages: ['Ultimate'],
     suffixes: ['Ultimate'],
   },
-  // ── Gold Saucer ────────────────────────────────────────────────────────────
   'Exquisite Weapons': {
     jobs: ['PLD', 'WAR', 'DRK', 'GNB', 'WHM', 'SCH', 'AST', 'SGE', 'MNK', 'DRG', 'NIN', 'SAM', 'RPR', 'VPR', 'BRD', 'MCH', 'DNC', 'BLM', 'SMN', 'RDM', 'PCT', 'BLU'],
     stages: ['Exquisite'],
@@ -129,21 +128,11 @@ export const RELIC_SERIES: Record<string, RelicSeriesData> = {
   },
 };
 
-// ---------------------------------------------------------------------------
-// Convenience helpers derived from RELIC_SERIES
-// ---------------------------------------------------------------------------
-
-/** Set of every suffix word used across all series (for extractWeaponType). */
 export const ALL_STAGE_SUFFIXES: Set<string> = new Set(
   Object.values(RELIC_SERIES).flatMap((s) => s.suffixes)
 );
 
-/**
- * Human-readable job names keyed by 3-letter job code.
- * Shared so both UI and any future utility code stay in sync.
- */
 export const JOB_NAMES: Record<string, string> = {
-  // Combat
   PLD: 'Paladin',
   MNK: 'Monk',
   WAR: 'Warrior',
@@ -166,7 +155,6 @@ export const JOB_NAMES: Record<string, string> = {
   VPR: 'Viper',
   PCT: 'Pictomancer',
   BLU: 'Blue Mage',
-  // Disciples of Hand
   CRP: 'Carpenter',
   BSM: 'Blacksmith',
   ARM: 'Armorer',
@@ -175,29 +163,107 @@ export const JOB_NAMES: Record<string, string> = {
   WVR: 'Weaver',
   ALC: 'Alchemist',
   CUL: 'Culinarian',
-  // Disciples of Land
   MIN: 'Miner',
   BTN: 'Botanist',
   FSH: 'Fisher',
 };
 
-/**
- * Job display order: Tanks → Healers → Melee DPS → Physical Ranged → Casters.
- * Shared so sort order is consistent wherever jobs are listed.
- */
 export const JOB_SORT_ORDER: string[] = [
-  // Tanks
   'PLD', 'WAR', 'DRK', 'GNB',
-  // Healers
   'WHM', 'SCH', 'AST', 'SGE',
-  // Melee DPS
   'MNK', 'DRG', 'NIN', 'SAM', 'RPR', 'VPR',
-  // Physical Ranged DPS
   'BRD', 'MCH', 'DNC',
-  // Magic Ranged / Casters
   'BLM', 'SMN', 'RDM', 'PCT', 'BLU',
-  // Disciples of Hand
   'CRP', 'BSM', 'ARM', 'GSM', 'LTW', 'WVR', 'ALC', 'CUL',
-  // Disciples of Land
   'MIN', 'BTN', 'FSH',
 ];
+
+/**
+ * Transforms achievement collectables + FFXIV Collect relic data into the
+ * generic GridGroup[] format for SeriesGridView.
+ *
+ * Groups by series → job (columns) → stage (rows), sorted by expansion.
+ */
+export function buildRelicWeaponGroups(
+  collectables: Collectable[],
+  relicWeaponsData: Record<number, RelicWeaponEntry>,
+  seriesFilter?: string[],
+): GridGroup[] {
+  const relicAchIds = new Set(Object.keys(relicWeaponsData).map(Number));
+  const relicAchs = collectables.filter((c) => relicAchIds.has(c.id));
+
+  const groups = new Map<
+    string,
+    {
+      expansion: number;
+      jobGroups: Map<string, Array<{ collectable: Collectable; relic: RelicWeaponEntry }>>;
+    }
+  >();
+
+  for (const ach of relicAchs) {
+    const relic = relicWeaponsData[ach.id];
+    if (!relic) continue;
+    const seriesName = relic.series;
+    if (seriesFilter && seriesFilter.length > 0 && !seriesFilter.includes(seriesName)) continue;
+
+    if (!groups.has(seriesName)) {
+      groups.set(seriesName, { expansion: relic.expansion, jobGroups: new Map() });
+    }
+    const sg = groups.get(seriesName)!;
+    const job = relic.job || 'Unknown';
+    if (!sg.jobGroups.has(job)) sg.jobGroups.set(job, []);
+    sg.jobGroups.get(job)!.push({ collectable: ach, relic });
+  }
+
+  const sorted = [...groups.entries()].sort(([, a], [, b]) => a.expansion - b.expansion);
+
+  return sorted.map(([seriesName, { expansion, jobGroups }]) => {
+    const stageLabels = RELIC_SERIES[seriesName]?.stages ?? [];
+    const numStages = Math.max(stageLabels.length, 1);
+
+    const sortedJobs = [...jobGroups.keys()].sort((a, b) => {
+      const ai = JOB_SORT_ORDER.indexOf(a);
+      const bi = JOB_SORT_ORDER.indexOf(b);
+      if (ai === -1 && bi === -1) return a.localeCompare(b);
+      if (ai === -1) return 1;
+      if (bi === -1) return -1;
+      return ai - bi;
+    });
+
+    const columns: GridColumn[] = sortedJobs.map((job) => ({
+      key: job,
+      header: job,
+      title: JOB_NAMES[job] ?? job,
+    }));
+
+    const cells = new Map<string, Array<GridCell | null>>();
+    for (const job of sortedJobs) {
+      const entries = [...(jobGroups.get(job) ?? [])].sort(
+        (a, b) => a.relic.order - b.relic.order,
+      );
+      cells.set(
+        job,
+        Array.from({ length: numStages }, (_, i) => {
+          const entry = entries[i];
+          if (!entry) return null;
+          return {
+            collectableId: entry.collectable.id,
+            label: entry.relic.relicName,
+            icon: entry.relic.icon || undefined,
+            globalOwned: entry.relic.owned || undefined,
+          };
+        }),
+      );
+    }
+
+    return {
+      key: seriesName,
+      title: seriesName,
+      expansionLabel: expansionName(expansion),
+      expansionClass: expansionCssClass(expansion),
+      rowLabels: stageLabels,
+      columns,
+      cells,
+    };
+  });
+}

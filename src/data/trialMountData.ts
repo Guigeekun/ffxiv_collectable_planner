@@ -1,16 +1,5 @@
-/**
- * Static data for trial mounts, organized by expansion and boss fight.
- *
- * Mount IDs come from the FFXIV Collect API (mounts[].id).
- * Instance IDs (instanceId) match FFXIV Collect's sources[].related_id.
- * shortName is a brief human-readable boss identifier used as the column header
- * in SeriesGridView (column space is limited — keep it under ~12 chars).
- *
- * To add a new trial mount: append an entry to the appropriate expansion's
- * `bosses` array. No component changes are needed.
- *
- * Source: https://ffxivcollect.com/api/mounts
- */
+import type { Collectable } from '../types';
+import type { GridGroup, GridColumn, GridCell } from '../seriesGridData';
 
 export interface TrialBoss {
   /** Full fight name (shown as a tooltip in the grid). */
@@ -342,3 +331,54 @@ export const TRIAL_MOUNTS_BY_EXPANSION: TrialExpansion[] = [
     ],
   },
 ];
+
+/**
+ * Transforms mount collectables + static TRIAL_MOUNTS_BY_EXPANSION data into
+ * the generic GridGroup[] format for SeriesGridView.
+ *
+ * Groups by expansion → boss (columns) → mount slot (rows).
+ */
+export function buildTrialMountGroups(collectables: Collectable[]): GridGroup[] {
+  const mountMap = new Map<number, Collectable>();
+  for (const m of collectables) mountMap.set(m.id, m);
+
+  return TRIAL_MOUNTS_BY_EXPANSION.map((expansion) => {
+    const maxMounts = Math.max(...expansion.bosses.map((b) => b.mountIds.length), 1);
+    const rowLabels = Array.from({ length: maxMounts }, () => '');
+
+    const columns: GridColumn[] = expansion.bosses.map((boss) => ({
+      key: String(boss.instanceId),
+      header: boss.shortName,
+      title: boss.name,
+    }));
+
+    const cells = new Map<string, Array<GridCell | null>>();
+    for (const boss of expansion.bosses) {
+      cells.set(
+        String(boss.instanceId),
+        Array.from({ length: maxMounts }, (_, i) => {
+          const mountId = boss.mountIds[i];
+          if (mountId === undefined) return null;
+          const mount = mountMap.get(mountId);
+          if (!mount) return null;
+          return {
+            collectableId: mountId,
+            label: mount.name,
+            icon: (mount as any).iconUrl ?? undefined,
+            globalOwned: (mount as any).globalOwned ?? undefined,
+          };
+        }),
+      );
+    }
+
+    return {
+      key: expansion.expansion,
+      title: expansion.expansion,
+      expansionLabel: expansion.expansion,
+      expansionClass: expansion.expansionClass,
+      rowLabels,
+      columns,
+      cells,
+    };
+  });
+}
