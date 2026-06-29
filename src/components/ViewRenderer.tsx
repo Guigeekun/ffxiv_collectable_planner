@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import type { Character, Collectable, CollectableType, SourceTypeMap } from '../types';
 import type { RelicWeaponEntry } from '../api/ffxivcollect';
 import type { ViewDefinition } from '../views/types';
-import { buildRelicWeaponGroups, buildTrialMountGroups, buildRaidMountGroups } from '../seriesGridData';
+import { buildRelicWeaponGroups, buildTrialMountGroups, buildRaidMountGroups, buildReputationAchievementGroups } from '../seriesGridData';
 import CollectableTable from './CollectableTable';
 import SeriesGridView from './SeriesGridView';
 
@@ -96,6 +96,8 @@ export default function ViewRenderer({
             return buildTrialMountGroups(filtered);
           case 'raid-mounts':
             return buildRaidMountGroups(filtered);
+          case 'reputation-achievements':
+            return buildReputationAchievementGroups(filtered);
           case 'relic-weapons':
           default:
             return buildRelicWeaponGroups(filtered, relicWeaponsData, view.seriesFilter);

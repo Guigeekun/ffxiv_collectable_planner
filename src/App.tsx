@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useCharacters } from './hooks/useCharacters';
 import { fetchCollectables, fetchSourceTypes } from './api/lalachievements';
 import { fetchAchievementCategories } from './api/xivapi';
-import { fetchMountData, fetchMinionData, fetchRelicWeaponsData, type FFXIVCollectData, type RelicWeaponEntry } from './api/ffxivcollect';
+import { fetchMountData, fetchMinionData, fetchRelicWeaponsData, fetchReputationAchievementsData, type FFXIVCollectData, type RelicWeaponEntry } from './api/ffxivcollect';
 import CharacterManager from './components/CharacterManager';
 import ViewHost from './components/ViewHost';
 import ProfilePanel from './components/ProfilePanel';
@@ -17,6 +17,7 @@ export default function App() {
   const [mountData, setMountData] = useState<Record<number, FFXIVCollectData>>({});
   const [minionData, setMinionData] = useState<Record<number, FFXIVCollectData>>({});
   const [relicWeaponsData, setRelicWeaponsData] = useState<Record<number, RelicWeaponEntry>>({});
+  const [reputationAchievementsData, setReputationAchievementsData] = useState<Record<number, FFXIVCollectData>>({});
   const [loadingData, setLoadingData] = useState(true);
 
   // Fetch source types and mount icons once
@@ -39,6 +40,10 @@ export default function App() {
     fetchRelicWeaponsData()
       .then(setRelicWeaponsData)
       .catch((err) => console.error('Failed to load relic weapons data:', err));
+
+    fetchReputationAchievementsData()
+      .then(setReputationAchievementsData)
+      .catch((err) => console.error('Failed to load reputation achievements data:', err));
   }, []);
 
   // Fetch collectables when type changes
@@ -76,8 +81,15 @@ export default function App() {
         globalOwned: minionData[c.id as number]?.owned
       }));
     }
+    if (collectableType === 'achievements') {
+      return collectables.map(c => ({
+        ...c,
+        iconUrl: reputationAchievementsData[c.id as number]?.icon,
+        globalOwned: reputationAchievementsData[c.id as number]?.owned
+      }));
+    }
     return collectables;
-  }, [collectables, collectableType, mountData, minionData]);
+  }, [collectables, collectableType, mountData, minionData, reputationAchievementsData]);
 
   return (
     <div className="app">

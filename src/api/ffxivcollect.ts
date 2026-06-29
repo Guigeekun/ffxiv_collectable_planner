@@ -183,3 +183,24 @@ export async function fetchRelicWeaponsData(): Promise<Record<number, RelicWeapo
 
   return map;
 }
+
+/**
+ * Fetch achievement data for Allied Society Quests (category 37) from FFXIV Collect.
+ * Returns a map of achievementId → FFXIVCollectData.
+ */
+export async function fetchReputationAchievementsData(): Promise<Record<number, FFXIVCollectData>> {
+  const res = await apiFetch(`${FFXIV_COLLECT_BASE}/achievements?category_id_eq=37&limit=100`);
+  if (!res.ok) throw new Error(`Failed to fetch reputation achievements from FFXIV Collect (${res.status})`);
+
+  const data = await res.json();
+  const map: Record<number, FFXIVCollectData> = {};
+
+  for (const ach of data.results) {
+    map[ach.id] = {
+      icon: ach.icon ?? '',
+      owned: ach.owned ?? ''
+    };
+  }
+
+  return map;
+}

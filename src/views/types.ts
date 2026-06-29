@@ -46,9 +46,10 @@ export interface ViewDefinition {
    * - 'relic-weapons' : relic/ultimate weapon series (default)
    * - 'trial-mounts'  : trial mounts organised by expansion + boss fight
    * - 'raid-mounts'   : raid mounts organised by expansion + raid fight
+   * - 'reputation-achievements' : reputation achievements by allied society
    * @default 'relic-weapons'
    */
-  dataSource?: 'relic-weapons' | 'trial-mounts' | 'raid-mounts';
+  dataSource?: 'relic-weapons' | 'trial-mounts' | 'raid-mounts' | 'reputation-achievements';
 
   /**
    * For layout='series-grid', 'relic-weapons' dataSource only:

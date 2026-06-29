@@ -84,6 +84,18 @@ export const VIEW_REGISTRY: ViewDefinition[] = [
     // references relicWeaponsData so either filter alone would work.
     categoryIds: [62, 63, 64, 65, 66, 68, 71, 75],
   },
+  {
+    id: 'achievements-reputation',
+    label: 'Reputations',
+    icon: '🤝',
+    collectableType: 'achievements',
+    layout: 'series-grid',
+    dataSource: 'reputation-achievements',
+    seriesGridConfig: {
+      cardSize: 'sm',
+      showCardLabels: false,
+    },
+  },
   // Example future views — uncomment and fill fields as needed:
   // {
   //   id: 'achievements-crafting',
