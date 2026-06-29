@@ -144,6 +144,7 @@ export default function App() {
             loading={loadingData}
             collectableType={collectableType}
             relicWeaponsData={relicWeaponsData}
+            mountData={mountData}
           />
         </section>
       </main>

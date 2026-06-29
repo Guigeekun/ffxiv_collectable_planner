@@ -3,7 +3,7 @@ import type { CollectableType } from '../types';
 /**
  * Layout engine used to render the view content.
  * - 'table'       : Standard filterable/sortable CollectableTable
- * - 'series-grid' : Series × Job 2D grid (relic weapons, crafting tools, …)
+ * - 'series-grid' : Generic 2-D grid driven by a dataSource builder function
  */
 export type ViewLayout = 'table' | 'series-grid';
 
@@ -24,7 +24,7 @@ export interface ViewDefinition {
   /** Which layout engine renders this view. */
   layout: ViewLayout;
 
-  // ── Optional pre-filters applied before the layout component receives data ─
+  // ── Optional pre-filters applied before the layout component receives data ──
 
   /**
    * If set, only items whose `sourceTypeId` is in this list are passed to the
@@ -41,9 +41,36 @@ export interface ViewDefinition {
   // ── series-grid specific ──────────────────────────────────────────────────
 
   /**
-   * For layout='series-grid': if provided, only the listed series names are
-   * shown (matched against the series name from FFXIV Collect).
+   * For layout='series-grid': selects the builder function that transforms
+   * collectables into the generic GridGroup[] format.
+   * - 'relic-weapons' : relic/ultimate weapon series (default)
+   * - 'trial-mounts'  : trial mounts organised by expansion + boss fight
+   * @default 'relic-weapons'
+   */
+  dataSource?: 'relic-weapons' | 'trial-mounts';
+
+  /**
+   * For layout='series-grid', 'relic-weapons' dataSource only:
+   * if provided, only the listed series names are shown.
    * Omit to show all series that have relic data.
    */
   seriesFilter?: string[];
+
+  /**
+   * For layout='series-grid': display configuration forwarded to SeriesGridView.
+   */
+  seriesGridConfig?: {
+    /**
+     * Icon card size.
+     * - 'sm': 52 × 52 px — compact (weapons / achievements)
+     * - 'md': 64 × 64 px — larger (mounts / minions)
+     * @default 'sm'
+     */
+    cardSize?: 'sm' | 'md';
+    /**
+     * Show the item name below the icon.
+     * @default false
+     */
+    showCardLabels?: boolean;
+  };
 }

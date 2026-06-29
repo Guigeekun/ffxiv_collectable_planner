@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import type { Character, Collectable, CollectableType, SourceTypeMap } from '../types';
 import type { RelicWeaponEntry } from '../api/ffxivcollect';
 import type { ViewDefinition } from '../views/types';
+import { buildRelicWeaponGroups, buildTrialMountGroups } from '../seriesGridData';
 import CollectableTable from './CollectableTable';
 import SeriesGridView from './SeriesGridView';
 
@@ -18,8 +19,16 @@ interface ViewRendererProps {
 /**
  * Routes a ViewDefinition to the correct layout component.
  *
- * Also applies any view-level pre-filters (categoryIds, itemIds) before
- * handing data down so individual layout components stay filter-agnostic.
+ * For 'series-grid' views this component:
+ *  1. Applies view-level pre-filters (categoryIds / itemIds)
+ *  2. Builds the generic GridGroup[] using the appropriate builder function
+ *  3. Builds the ownership map from Character data for the active collectableType
+ *  4. Passes the result to the generic SeriesGridView
+ *
+ * Adding a new series-grid data source only requires:
+ *  - A builder function in seriesGridData.ts
+ *  - A registry entry with the matching dataSource key
+ *  - No changes here
  */
 export default function ViewRenderer({
   view,
@@ -30,23 +39,42 @@ export default function ViewRenderer({
   collectableType,
   relicWeaponsData,
 }: ViewRendererProps) {
-  // Apply view-level pre-filters declared in the ViewDefinition
+  // ── 1. Apply view-level pre-filters ────────────────────────────────────────
   const filtered = useMemo(() => {
     let items = collectables;
-
     if (view.categoryIds && view.categoryIds.length > 0) {
       const catSet = new Set(view.categoryIds);
       items = items.filter((c) => catSet.has(c.sourceTypeId));
     }
-
     if (view.itemIds && view.itemIds.length > 0) {
       const idSet = new Set(view.itemIds);
       items = items.filter((c) => idSet.has(c.id));
     }
-
     return items;
   }, [collectables, view]);
 
+  // ── 2. Ownership map (only needed for series-grid) ─────────────────────────
+  const ownershipMap = useMemo(() => {
+    if (view.layout !== 'series-grid') return {};
+    const map: Record<number, Set<number>> = {};
+    for (const char of characters) {
+      const owned: any[] = (() => {
+        switch (collectableType) {
+          case 'mounts':   return (char.mounts as any[])        || [];
+          case 'minions':  return (char.minions as any[])        || [];
+          case 'achievements':
+          case 'titles':   return (char.achievements as any[])   || [];
+          default:         return [];
+        }
+      })();
+      map[char.id] = new Set(
+        owned.map((m: any) => (typeof m === 'object' && m !== null ? (m.id ?? m) : m)),
+      );
+    }
+    return map;
+  }, [view.layout, characters, collectableType]);
+
+  // ── 3. Route to layout ─────────────────────────────────────────────────────
   switch (view.layout) {
     case 'table':
       return (
@@ -59,16 +87,33 @@ export default function ViewRenderer({
         />
       );
 
-    case 'series-grid':
+    case 'series-grid': {
+      const dataSource = view.dataSource ?? 'relic-weapons';
+
+      const groups = (() => {
+        switch (dataSource) {
+          case 'trial-mounts':
+            return buildTrialMountGroups(filtered);
+          case 'relic-weapons':
+          default:
+            return buildRelicWeaponGroups(filtered, relicWeaponsData, view.seriesFilter);
+        }
+      })();
+
+      const itemLabel =
+        dataSource === 'trial-mounts' ? 'mounts' : 'achievements';
+
       return (
         <SeriesGridView
-          collectables={filtered}
+          groups={groups}
+          ownershipMap={ownershipMap}
           characters={characters}
-          relicWeaponsData={relicWeaponsData}
           loading={loading}
-          seriesFilter={view.seriesFilter}
+          config={view.seriesGridConfig}
+          itemLabel={itemLabel}
         />
       );
+    }
 
     default:
       return (

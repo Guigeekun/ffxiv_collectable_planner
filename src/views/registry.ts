@@ -22,6 +22,18 @@ export const VIEW_REGISTRY: ViewDefinition[] = [
     collectableType: 'mounts',
     layout: 'table',
   },
+  {
+    id: 'mounts-trials',
+    label: 'Trials',
+    icon: '⚔️',
+    collectableType: 'mounts',
+    layout: 'series-grid',
+    dataSource: 'trial-mounts',
+    seriesGridConfig: {
+      cardSize: 'md',
+      showCardLabels: true,
+    },
+  },
 
   // ── Minions ───────────────────────────────────────────────────────────────
   {
@@ -55,26 +67,20 @@ export const VIEW_REGISTRY: ViewDefinition[] = [
     icon: '⚔️',
     collectableType: 'achievements',
     layout: 'series-grid',
+    dataSource: 'relic-weapons',
     // categoryIds restricts what's passed to the grid; the grid also cross-
     // references relicWeaponsData so either filter alone would work.
     categoryIds: [62, 63, 64, 65, 66, 68, 71, 75],
   },
-  // Example future views — uncomment and fill seriesFilter as needed:
+  // Example future views — uncomment and fill fields as needed:
   // {
   //   id: 'achievements-crafting',
   //   label: 'Crafting Tools',
   //   icon: '🔨',
   //   collectableType: 'achievements',
   //   layout: 'series-grid',
+  //   dataSource: 'relic-weapons',
   //   seriesFilter: ['Splendorous Tools', 'Skysteel Tools', 'Cosmic Tools'],
-  // },
-  // {
-  //   id: 'achievements-pvp',
-  //   label: 'PvP',
-  //   icon: '🛡️',
-  //   collectableType: 'achievements',
-  //   layout: 'table',
-  //   categoryIds: [42],
   // },
 ];
 

@@ -18,11 +18,8 @@ interface ViewHostProps {
  * Responsibilities:
  *  1. Reads available views for the current collectableType from the registry.
  *  2. Manages the active view (persisted to localStorage via useViewState).
- *  3. Renders the view-switcher tab bar (hidden when there's only one view).
+ *  3. Renders the view-switcher tab bar (hidden when there is only one view).
  *  4. Delegates rendering to ViewRenderer.
- *
- * This is what App renders — CollectableTable is no longer the root of the
- * content area.
  */
 export default function ViewHost({
   collectables,
@@ -36,7 +33,6 @@ export default function ViewHost({
 
   return (
     <div className="view-host">
-      {/* Only render the switcher when there are multiple views to choose from */}
       {views.length > 1 && (
         <div className="view-host-toolbar">
           <div className="achievement-view-switcher">
