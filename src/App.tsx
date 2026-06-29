@@ -4,7 +4,7 @@ import { fetchCollectables, fetchSourceTypes } from './api/lalachievements';
 import { fetchAchievementCategories } from './api/xivapi';
 import { fetchMountData, fetchMinionData, fetchRelicWeaponsData, type FFXIVCollectData, type RelicWeaponEntry } from './api/ffxivcollect';
 import CharacterManager from './components/CharacterManager';
-import CollectableTable from './components/CollectableTable';
+import ViewHost from './components/ViewHost';
 import ProfilePanel from './components/ProfilePanel';
 import type { Collectable, CollectableType, SourceTypeMap } from './types';
 
@@ -137,14 +137,13 @@ export default function App() {
         </section>
 
         <section className="table-section">
-          <CollectableTable
+          <ViewHost
             collectables={enrichedCollectables}
             characters={characters}
             sourceTypes={activeSourceTypes}
             loading={loadingData}
             collectableType={collectableType}
             relicWeaponsData={relicWeaponsData}
-            achievementCategories={achievementCategories}
           />
         </section>
       </main>

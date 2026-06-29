@@ -1,20 +1,21 @@
 import { useMemo, useState } from 'react';
-import type { Character, Collectable, SourceTypeMap } from '../types';
+import type { Character, Collectable } from '../types';
 import type { RelicWeaponEntry } from '../api/ffxivcollect';
 import { RELIC_SERIES, JOB_NAMES, JOB_SORT_ORDER } from '../relicWeaponData';
 
-interface AchievementsWeaponsViewProps {
-  /** All achievements (unfiltered) */
+interface SeriesGridViewProps {
+  /** All collectables for the current type (pre-filtered by ViewRenderer). */
   collectables: Collectable[];
   characters: Character[];
-  achievementCategories: SourceTypeMap;
   /** Map: achievementId → RelicWeaponEntry (from FFXIV Collect) */
   relicWeaponsData: Record<number, RelicWeaponEntry>;
   loading: boolean;
+  /**
+   * Optional allow-list of series names. When provided only the listed series
+   * are shown. Omit to show every series that has relic data.
+   */
+  seriesFilter?: string[];
 }
-
-/** Weapon category IDs that belong to weapon achievements */
-const WEAPON_CATEGORY_IDS = new Set([62, 63, 64, 65, 66, 68, 71, 75]);
 
 /**
  * Map FFXIV Collect expansion number to expansion name.
@@ -256,12 +257,13 @@ function WeaponAchievementCard({ achievement, relic, characters, ownershipMap }:
 // Main export
 // ---------------------------------------------------------------------------
 
-export default function AchievementsWeaponsView({
+export default function SeriesGridView({
   collectables,
   characters,
   relicWeaponsData,
   loading,
-}: AchievementsWeaponsViewProps) {
+  seriesFilter,
+}: SeriesGridViewProps) {
   // Build ownership map: charId → Set<achievementId>
   const ownershipMap = useMemo(() => {
     const map: Record<number, Set<number>> = {};
@@ -278,14 +280,12 @@ export default function AchievementsWeaponsView({
     return map;
   }, [characters]);
 
-  // Filter to weapon-category achievements that appear in the relic weapons data
-  const weaponAchievements = useMemo(() => {
+  // Filter to collectables that appear in the relic weapons data.
+  // categoryIds pre-filtering is done by ViewRenderer before this component
+  // receives collectables, so we only need to cross-reference relicWeaponsData.
+  const relicAchievements = useMemo(() => {
     const relicAchIds = new Set(Object.keys(relicWeaponsData).map(Number));
-    return collectables.filter(
-      (c) =>
-        (WEAPON_CATEGORY_IDS.has(c.sourceTypeId) || relicAchIds.has(c.id))
-        && relicAchIds.has(c.id)
-    );
+    return collectables.filter((c) => relicAchIds.has(c.id));
   }, [collectables, relicWeaponsData]);
 
   // Group achievements by series → job → sorted entries
@@ -298,11 +298,17 @@ export default function AchievementsWeaponsView({
       }
     >();
 
-    for (const ach of weaponAchievements) {
+    for (const ach of relicAchievements) {
       const relic = relicWeaponsData[ach.id];
       if (!relic) continue;
 
       const seriesName = relic.series;
+
+      // Apply optional series filter from ViewDefinition
+      if (seriesFilter && seriesFilter.length > 0 && !seriesFilter.includes(seriesName)) {
+        continue;
+      }
+
       if (!groups.has(seriesName)) {
         groups.set(seriesName, {
           expansion: relic.expansion,
@@ -328,13 +334,13 @@ export default function AchievementsWeaponsView({
 
     // Sort series by expansion ascending (oldest first)
     return [...groups.entries()].sort(([, a], [, b]) => a.expansion - b.expansion);
-  }, [weaponAchievements, relicWeaponsData]);
+  }, [relicAchievements, relicWeaponsData, seriesFilter]);
 
   if (loading) {
     return (
       <div className="table-loading">
         <div className="spinner" />
-        <p>Loading weapon achievements...</p>
+        <p>Loading achievements…</p>
       </div>
     );
   }
@@ -344,7 +350,7 @@ export default function AchievementsWeaponsView({
       <div className="weapons-view-empty">
         <div className="weapons-loading-info">
           <div className="spinner" />
-          <p>Loading weapon data from FFXIV Collect...</p>
+          <p>Loading relic data from FFXIV Collect…</p>
         </div>
       </div>
     );
@@ -353,18 +359,18 @@ export default function AchievementsWeaponsView({
   if (seriesGroups.length === 0) {
     return (
       <div className="weapons-view-empty">
-        <p>No weapon achievements found. Make sure achievements are loaded.</p>
+        <p>No matching achievements found. Make sure achievements are loaded.</p>
       </div>
     );
   }
 
-  const totalWeaponAchs = weaponAchievements.length;
+  const totalAchs = relicAchievements.length;
 
   return (
     <div className="weapons-view">
       <div className="weapons-view-header">
         <div className="weapons-view-info">
-          <span className="weapons-count">{totalWeaponAchs} weapon achievements</span>
+          <span className="weapons-count">{totalAchs} achievements</span>
           <span className="weapons-series-count">across {seriesGroups.length} series</span>
         </div>
         {characters.length > 0 && (
@@ -380,9 +386,8 @@ export default function AchievementsWeaponsView({
       <div className="weapons-view-note">
         <span className="weapons-view-note-icon">ℹ️</span>
         <span>
-          This view is tied to the <strong>achievements</strong> system — only relic weapons
-          that have an associated in-game achievement are shown. Stages or series without
-          achievements will not appear.
+          Only achievements linked to a relic weapon in FFXIV Collect are shown.
+          Stages or series without associated achievements will not appear.
         </span>
       </div>
 

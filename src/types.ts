@@ -80,5 +80,4 @@ export type SourceTypeMap = Record<number, string>;
 // Collectable type toggle
 export type CollectableType = 'mounts' | 'minions' | 'titles' | 'achievements';
 
-// Sub-view within the achievements tab
-export type AchievementView = 'all' | 'weapons';
+// Sub-views are now driven by ViewDefinition in src/views/registry.ts

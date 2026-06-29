@@ -1386,6 +1386,34 @@ tbody tr:hover {
    ACHIEVEMENT VIEW SWITCHER
    ============================================ */
 
+/* ============================================
+   VIEW HOST — wrapper for switcher + content
+   ============================================ */
+
+.view-host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.view-host-toolbar {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-bottom: none;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+/* When the view-host has a toolbar, the child table-container or weapons-view
+   loses its own top-left/right border-radius to flow seamlessly */
+.view-host .view-host-toolbar + * .table-container,
+.view-host .view-host-toolbar ~ .table-container {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
 .achievement-view-switcher {
   display: flex;
   gap: 0;
