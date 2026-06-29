@@ -34,6 +34,18 @@ export const VIEW_REGISTRY: ViewDefinition[] = [
       showCardLabels: true,
     },
   },
+  {
+    id: 'mounts-raids',
+    label: 'Raids',
+    icon: '🏰',
+    collectableType: 'mounts',
+    layout: 'series-grid',
+    dataSource: 'raid-mounts',
+    seriesGridConfig: {
+      cardSize: 'md',
+      showCardLabels: true,
+    },
+  },
 
   // ── Minions ───────────────────────────────────────────────────────────────
   {

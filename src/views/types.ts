@@ -45,9 +45,10 @@ export interface ViewDefinition {
    * collectables into the generic GridGroup[] format.
    * - 'relic-weapons' : relic/ultimate weapon series (default)
    * - 'trial-mounts'  : trial mounts organised by expansion + boss fight
+   * - 'raid-mounts'   : raid mounts organised by expansion + raid fight
    * @default 'relic-weapons'
    */
-  dataSource?: 'relic-weapons' | 'trial-mounts';
+  dataSource?: 'relic-weapons' | 'trial-mounts' | 'raid-mounts';
 
   /**
    * For layout='series-grid', 'relic-weapons' dataSource only:
