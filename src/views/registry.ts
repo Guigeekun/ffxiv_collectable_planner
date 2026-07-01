@@ -82,7 +82,7 @@ export const VIEW_REGISTRY: ViewDefinition[] = [
     dataSource: 'relic-weapons',
     // categoryIds restricts what's passed to the grid; the grid also cross-
     // references relicWeaponsData so either filter alone would work.
-    categoryIds: [62, 63, 64, 65, 66, 68, 71, 75],
+    categoryIds: [62, 63, 64, 65, 66, 68, 71, 75, 81],
   },
   {
     id: 'achievements-reputation',
@@ -91,6 +91,19 @@ export const VIEW_REGISTRY: ViewDefinition[] = [
     collectableType: 'achievements',
     layout: 'series-grid',
     dataSource: 'reputation-achievements',
+    seriesGridConfig: {
+      cardSize: 'sm',
+      showCardLabels: false,
+    },
+  },
+  {
+    id: 'achievements-field-ops',
+    label: 'Field Ops',
+    icon: '🏝️',
+    collectableType: 'achievements',
+    layout: 'series-grid',
+    dataSource: 'field-operations',
+    categoryIds: [71, 49, 35],
     seriesGridConfig: {
       cardSize: 'sm',
       showCardLabels: false,

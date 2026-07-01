@@ -6,6 +6,7 @@ import { buildRelicWeaponGroups } from '../data/relicWeaponData';
 import { buildTrialMountGroups } from '../data/trialMountData';
 import { buildRaidMountGroups } from '../data/raidMountData';
 import { buildReputationAchievementGroups } from '../data/reputationAchievementData';
+import { buildFieldOperationsGroups } from '../data/fieldOperationsData';
 import CollectableTable from './CollectableTable';
 import SeriesGridView from './SeriesGridView';
 
@@ -101,6 +102,8 @@ export default function ViewRenderer({
             return buildRaidMountGroups(filtered);
           case 'reputation-achievements':
             return buildReputationAchievementGroups(filtered);
+          case 'field-operations':
+            return buildFieldOperationsGroups(filtered);
           case 'relic-weapons':
           default:
             return buildRelicWeaponGroups(filtered, relicWeaponsData, view.seriesFilter);

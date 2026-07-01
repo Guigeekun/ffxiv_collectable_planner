@@ -49,7 +49,7 @@ export interface ViewDefinition {
    * - 'reputation-achievements' : reputation achievements by allied society
    * @default 'relic-weapons'
    */
-  dataSource?: 'relic-weapons' | 'trial-mounts' | 'raid-mounts' | 'reputation-achievements';
+  dataSource?: 'relic-weapons' | 'trial-mounts' | 'raid-mounts' | 'reputation-achievements' | 'field-operations';
 
   /**
    * For layout='series-grid', 'relic-weapons' dataSource only:
