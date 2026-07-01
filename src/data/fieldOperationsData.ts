@@ -26,62 +26,62 @@ export const FIELD_OP_GROUPS: FieldOpGroupData[] = [
     expansionLabel: 'Stormblood',
     expansionClass: 'exp-sb',
     columns: [
-  {
-    "key": "anemos",
-    "header": "Anemos",
-    "title": "Eureka Anemos",
-    "achmentIds": [
-      2046,
-      2045,
-      null,
-      null
+      {
+        "key": "anemos",
+        "header": "Anemos",
+        "title": "Eureka Anemos",
+        "achmentIds": [
+          2046,
+          2045,
+          null,
+          null
+        ]
+      },
+      {
+        "key": "pagos",
+        "header": "Pagos",
+        "title": "Eureka Pagos",
+        "achmentIds": [
+          2059,
+          2097,
+          null,
+          null
+        ]
+      },
+      {
+        "key": "pyros",
+        "header": "Pyros",
+        "title": "Eureka Pyros",
+        "achmentIds": [
+          2158,
+          2159,
+          null,
+          null
+        ]
+      },
+      {
+        "key": "hydatos",
+        "header": "Hydatos",
+        "title": "Eureka Hydatos",
+        "achmentIds": [
+          2230,
+          2231,
+          2242,
+          null
+        ]
+      },
+      {
+        "key": "arsenal",
+        "header": "Arsenal",
+        "title": "Baldesion Arsenal",
+        "achmentIds": [
+          2227,
+          2228,
+          2229,
+          null
+        ]
+      }
     ]
-  },
-  {
-    "key": "pagos",
-    "header": "Pagos",
-    "title": "Eureka Pagos",
-    "achmentIds": [
-      2059,
-      2097,
-      null,
-      null
-    ]
-  },
-  {
-    "key": "pyros",
-    "header": "Pyros",
-    "title": "Eureka Pyros",
-    "achmentIds": [
-      2158,
-      2159,
-      null,
-      null
-    ]
-  },
-  {
-    "key": "hydatos",
-    "header": "Hydatos",
-    "title": "Eureka Hydatos",
-    "achmentIds": [
-      2230,
-      2231,
-      2242,
-      null
-    ]
-  },
-  {
-    "key": "arsenal",
-    "header": "Arsenal",
-    "title": "Baldesion Arsenal",
-    "achmentIds": [
-      2227,
-      2228,
-      2229,
-      null
-    ]
-  }
-]
   },
   {
     key: 'bozja',
@@ -89,117 +89,125 @@ export const FIELD_OP_GROUPS: FieldOpGroupData[] = [
     expansionLabel: 'Shadowbringers',
     expansionClass: 'exp-shb',
     columns: [
-  {
-    "key": "skirmish",
-    "header": "Skirmish",
-    "title": "Skirmishes Completed",
-    "achmentIds": [
-      2676,
-      2677,
-      2678,
-      2679
+      {
+        "key": "skirmish",
+        "header": "Skirmish",
+        "title": "Skirmishes Completed",
+        "achmentIds": [
+          2676,
+          2677,
+          2678,
+          2679
+        ]
+      },
+      {
+        "key": "ce",
+        "header": "CEs",
+        "title": "Critical Engagements",
+        "achmentIds": [
+          2672,
+          2673,
+          2674,
+          2675
+        ]
+      },
+      {
+        "key": "castrum",
+        "header": "Castrum",
+        "title": "Castrum Lacus Litore Clears",
+        "achmentIds": [
+          2680,
+          2681,
+          2682,
+          null
+        ]
+      },
+      {
+        "key": "delubrum",
+        "header": "Delubrum",
+        "title": "Delubrum Reginae Clears",
+        "achmentIds": [
+          2762,
+          2763,
+          2764,
+          null
+        ]
+      },
+      {
+        "key": "savage",
+        "header": "Savage",
+        "title": "Delubrum Reginae (Savage) Clears",
+        "achmentIds": [
+          2765,
+          2766,
+          2767,
+          null
+        ]
+      },
+      {
+        "key": "dalriada",
+        "header": "Dalriada",
+        "title": "The Dalriada Clears",
+        "achmentIds": [
+          2874,
+          2875,
+          2876,
+          null
+        ]
+      },
+      {
+        "key": "appraisal",
+        "header": "Appraisal",
+        "title": "Forgotten Fragments Appraised",
+        "achmentIds": [
+          2687,
+          2688,
+          2689,
+          2690
+        ]
+      },
+      {
+        "key": "actions_duels",
+        "header": "Actions/Duels",
+        "title": "Lost Actions & Duel Wins",
+        "achmentIds": [
+          2686,
+          2880,
+          2881,
+        ]
+      },
+      {
+        "key": "support_map",
+        "header": "Support/Map",
+        "title": "Resurrects & Map Discovery",
+        "achmentIds": [
+          2691,
+          2692,
+          2693,
+
+        ]
+      },
+      {
+        "key": "map",
+        "header": "Mapping",
+        "title": "Map Discovery",
+        "achmentIds": [
+          2891,
+          2620
+        ]
+      },
+      {
+        "key": "misc",
+        "header": "Misc",
+        "title": "Miscellaneous Achievements",
+        "achmentIds": [
+          2882,
+          2883,
+          null,
+          null
+        ]
+      }
     ]
-  },
-  {
-    "key": "ce",
-    "header": "CEs",
-    "title": "Critical Engagements",
-    "achmentIds": [
-      2672,
-      2673,
-      2674,
-      2675
-    ]
-  },
-  {
-    "key": "castrum",
-    "header": "Castrum",
-    "title": "Castrum Lacus Litore Clears",
-    "achmentIds": [
-      2680,
-      2681,
-      2682,
-      null
-    ]
-  },
-  {
-    "key": "delubrum",
-    "header": "Delubrum",
-    "title": "Delubrum Reginae Clears",
-    "achmentIds": [
-      2762,
-      2763,
-      2764,
-      null
-    ]
-  },
-  {
-    "key": "savage",
-    "header": "Savage",
-    "title": "Delubrum Reginae (Savage) Clears",
-    "achmentIds": [
-      2765,
-      2766,
-      2767,
-      null
-    ]
-  },
-  {
-    "key": "dalriada",
-    "header": "Dalriada",
-    "title": "The Dalriada Clears",
-    "achmentIds": [
-      2874,
-      2875,
-      2876,
-      null
-    ]
-  },
-  {
-    "key": "appraisal",
-    "header": "Appraisal",
-    "title": "Forgotten Fragments Appraised",
-    "achmentIds": [
-      2687,
-      2688,
-      2689,
-      2690
-    ]
-  },
-  {
-    "key": "actions_duels",
-    "header": "Actions/Duels",
-    "title": "Lost Actions & Duel Wins",
-    "achmentIds": [
-      2686,
-      2880,
-      2881,
-      2883
-    ]
-  },
-  {
-    "key": "support_map",
-    "header": "Support/Map",
-    "title": "Resurrects & Map Discovery",
-    "achmentIds": [
-      2691,
-      2692,
-      2693,
-      2620
-    ]
-  },
-  {
-    "key": "zadnor_suns",
-    "header": "Zadnor/Suns",
-    "title": "Suns & Zadnor Map Discovery",
-    "achmentIds": [
-      2882,
-      2891,
-      null,
-      null
-    ]
-  }
-]
   },
   {
     key: 'occult',
@@ -207,120 +215,134 @@ export const FIELD_OP_GROUPS: FieldOpGroupData[] = [
     expansionLabel: 'Dawntrail',
     expansionClass: 'exp-dt',
     columns: [
-  {
-    "key": "fate",
-    "header": "FATEs",
-    "title": "FATEs completed on South Horn",
-    "achmentIds": [
-      3664,
-      3665,
-      3666,
-      3667
+      {
+        "key": "fate",
+        "header": "FATEs",
+        "title": "FATEs completed on South Horn",
+        "achmentIds": [
+          3664,
+          3665,
+          3666,
+          3667
+        ]
+      },
+      {
+        "key": "ce",
+        "header": "CEs",
+        "title": "Critical Encounters completed",
+        "achmentIds": [
+          3660,
+          3661,
+          3662,
+          3663
+        ]
+      },
+      {
+        "key": "fork",
+        "header": "Forked Tower",
+        "title": "Forked Tower: Blood Clears",
+        "achmentIds": [
+          3668,
+          3669,
+          3670,
+          3671
+        ]
+      },
+      {
+        "key": "plenty",
+        "header": "Plenty",
+        "title": "Treasure Coffers Opened",
+        "achmentIds": [
+          3678,
+          3679,
+          3680,
+          3681,
+          4019
+        ]
+      },
+      {
+        "key": "pots",
+        "header": "Pots",
+        "title": "Coffers revealed by Persistent Pots",
+        "achmentIds": [
+          3682,
+          3683,
+          3684,
+          3685,
+          4020
+        ]
+      },
+      {
+        "key": "bunnies",
+        "header": "Bunnies",
+        "title": "Coffers revealed by Happy Bunnies",
+        "achmentIds": [
+          3686,
+          3687,
+          3688,
+          3689,
+          null
+        ]
+      },
+      {
+        "key": "phantomastery",
+        "header": "Jobs",
+        "title": "Phantom Jobs Mastered",
+        "achmentIds": [
+          3675,
+          3676,
+          3677,
+          null,
+          null
+        ]
+      },
+      {
+        "key": "medicine_map",
+        "header": "Support/Map",
+        "title": "Resurrects & Map Discovery",
+        "achmentIds": [
+          3672,
+          3673,
+          3674,
+          null,
+          null
+        ]
+      },
+      {
+        "key": "misc",
+        "header": "Misc",
+        "title": "Miscellaneous Achievements",
+        "achmentIds": [
+          3634,
+          3659,
+          3743
+        ]
+      }
     ]
-  },
-  {
-    "key": "ce",
-    "header": "CEs",
-    "title": "Critical Encounters completed",
-    "achmentIds": [
-      3660,
-      3661,
-      3662,
-      3663
-    ]
-  },
-  {
-    "key": "fork",
-    "header": "Forked Tower",
-    "title": "Forked Tower: Blood Clears",
-    "achmentIds": [
-      3668,
-      3669,
-      3670,
-      3671
-    ]
-  },
-  {
-    "key": "plenty",
-    "header": "Plenty",
-    "title": "Treasure Coffers Opened",
-    "achmentIds": [
-      3678,
-      3679,
-      3680,
-      3681
-    ]
-  },
-  {
-    "key": "pots",
-    "header": "Pots",
-    "title": "Coffers revealed by Persistent Pots",
-    "achmentIds": [
-      3682,
-      3683,
-      3684,
-      3685
-    ]
-  },
-  {
-    "key": "bunnies",
-    "header": "Bunnies",
-    "title": "Coffers revealed by Happy Bunnies",
-    "achmentIds": [
-      3686,
-      3687,
-      3688,
-      3689
-    ]
-  },
-  {
-    "key": "phantomastery",
-    "header": "Jobs",
-    "title": "Phantom Jobs Mastered",
-    "achmentIds": [
-      3675,
-      3676,
-      3677,
-      null
-    ]
-  },
-  {
-    "key": "medicine_map",
-    "header": "Support/Map",
-    "title": "Resurrects & Map Discovery",
-    "achmentIds": [
-      3672,
-      3673,
-      3674,
-      3743
-    ]
-  },
-  {
-    "key": "meta_quest",
-    "header": "Meta/Quest",
-    "title": "Crescent Story, Records & Coffer Grind",
-    "achmentIds": [
-      3634,
-      3659,
-      4019,
-      4020
-    ]
-  }
-]
   }
 ];
 
-/**
- * Transforms field operations achievements + static data into the generic GridGroup[] format for SeriesGridView.
- * Groups by field operation → activity columns → milestones (rows).
- */
 export function buildFieldOperationsGroups(collectables: Collectable[]): GridGroup[] {
   const achMap = new Map<number, Collectable>();
   for (const c of collectables) achMap.set(c.id, c);
 
   return FIELD_OP_GROUPS.map((group) => {
-    const numRows = 4;
-    const rowLabels = ['Tier 1', 'Tier 2', 'Tier 3', 'Tier 4'];
+    // Find the highest row index that actually contains an achievement ID in this group
+    let maxActiveIndex = 0;
+    for (const col of group.columns) {
+      for (let i = col.achmentIds.length - 1; i >= 0; i--) {
+        if (col.achmentIds[i] !== null && col.achmentIds[i] !== undefined) {
+          if (i > maxActiveIndex) {
+            maxActiveIndex = i;
+          }
+          break;
+        }
+      }
+    }
+
+    const numRows = maxActiveIndex + 1;
+    const baseRowLabels = ['Tier 1', 'Tier 2', 'Tier 3', 'Tier 4', 'Tier 5'];
+    const rowLabels = baseRowLabels.slice(0, numRows);
 
     const columns: GridColumn[] = group.columns.map((col) => ({
       key: col.key,
@@ -336,10 +358,10 @@ export function buildFieldOperationsGroups(collectables: Collectable[]): GridGro
         Array.from({ length: numRows }, (_, i) => {
           const achId = col.achmentIds[i];
           if (!achId) return null;
-          
+
           const collectable = achMap.get(achId);
           if (!collectable) return null;
-          
+
           return {
             collectableId: achId,
             label: collectable.name,
