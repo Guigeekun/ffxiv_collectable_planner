@@ -251,6 +251,7 @@ export function buildRelicWeaponGroups(
             label: entry.relic.relicName,
             icon: entry.relic.icon || undefined,
             globalOwned: entry.relic.owned || undefined,
+            description: entry.collectable.howTo || undefined,
           };
         }),
       );

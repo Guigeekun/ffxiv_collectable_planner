@@ -345,6 +345,7 @@ export function buildFieldOperationsGroups(collectables: Collectable[]): GridGro
             label: collectable.name,
             icon: collectable.iconUrl || undefined,
             globalOwned: collectable.globalOwned || undefined,
+            description: collectable.howTo || undefined,
           };
         })
       );
@@ -361,3 +362,13 @@ export function buildFieldOperationsGroups(collectables: Collectable[]): GridGro
     };
   });
 }
+
+export const FIELD_OP_ACHIEVEMENT_IDS: number[] = [
+  ...new Set(
+    FIELD_OP_GROUPS.flatMap((group) =>
+      group.columns.flatMap((col) =>
+        col.achmentIds.filter((id): id is number => id !== null)
+      )
+    )
+  )
+];

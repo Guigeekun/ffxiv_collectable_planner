@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useCharacters } from './hooks/useCharacters';
 import { fetchCollectables, fetchSourceTypes } from './api/lalachievements';
 import { fetchAchievementCategories } from './api/xivapi';
-import { fetchMountData, fetchMinionData, fetchRelicWeaponsData, fetchReputationAchievementsData, type FFXIVCollectData, type RelicWeaponEntry } from './api/ffxivcollect';
+import { fetchMountData, fetchMinionData, fetchRelicWeaponsData, fetchReputationAchievementsData, fetchFieldOperationsAchievementsData, type FFXIVCollectData, type RelicWeaponEntry } from './api/ffxivcollect';
 import CharacterManager from './components/CharacterManager';
 import ViewHost from './components/ViewHost';
 import ProfilePanel from './components/ProfilePanel';
@@ -18,6 +18,7 @@ export default function App() {
   const [minionData, setMinionData] = useState<Record<number, FFXIVCollectData>>({});
   const [relicWeaponsData, setRelicWeaponsData] = useState<Record<number, RelicWeaponEntry>>({});
   const [reputationAchievementsData, setReputationAchievementsData] = useState<Record<number, FFXIVCollectData>>({});
+  const [fieldOpsAchievementsData, setFieldOpsAchievementsData] = useState<Record<number, FFXIVCollectData>>({});
   const [loadingData, setLoadingData] = useState(true);
 
   // Fetch source types and mount icons once
@@ -44,6 +45,10 @@ export default function App() {
     fetchReputationAchievementsData()
       .then(setReputationAchievementsData)
       .catch((err) => console.error('Failed to load reputation achievements data:', err));
+
+    fetchFieldOperationsAchievementsData()
+      .then(setFieldOpsAchievementsData)
+      .catch((err) => console.error('Failed to load field operations achievements data:', err));
   }, []);
 
   // Fetch collectables when type changes
@@ -84,12 +89,12 @@ export default function App() {
     if (collectableType === 'achievements') {
       return collectables.map(c => ({
         ...c,
-        iconUrl: reputationAchievementsData[c.id as number]?.icon,
-        globalOwned: reputationAchievementsData[c.id as number]?.owned
+        iconUrl: reputationAchievementsData[c.id as number]?.icon || fieldOpsAchievementsData[c.id as number]?.icon,
+        globalOwned: reputationAchievementsData[c.id as number]?.owned || fieldOpsAchievementsData[c.id as number]?.owned
       }));
     }
     return collectables;
-  }, [collectables, collectableType, mountData, minionData, reputationAchievementsData]);
+  }, [collectables, collectableType, mountData, minionData, reputationAchievementsData, fieldOpsAchievementsData]);
 
   return (
     <div className="app">

@@ -1,4 +1,5 @@
 import { RELIC_SERIES, ALL_STAGE_SUFFIXES } from '../data/relicWeaponData';
+import { FIELD_OP_ACHIEVEMENT_IDS } from '../data/fieldOperationsData';
 
 const FFXIV_COLLECT_BASE = 'https://ffxivcollect.com/api';
 
@@ -191,6 +192,28 @@ export async function fetchRelicWeaponsData(): Promise<Record<number, RelicWeapo
 export async function fetchReputationAchievementsData(): Promise<Record<number, FFXIVCollectData>> {
   const res = await apiFetch(`${FFXIV_COLLECT_BASE}/achievements?category_id_eq=37&limit=100`);
   if (!res.ok) throw new Error(`Failed to fetch reputation achievements from FFXIV Collect (${res.status})`);
+
+  const data = await res.json();
+  const map: Record<number, FFXIVCollectData> = {};
+
+  for (const ach of data.results) {
+    map[ach.id] = {
+      icon: ach.icon ?? '',
+      owned: ach.owned ?? ''
+    };
+  }
+
+  return map;
+}
+
+/**
+ * Fetch achievement data for Field Operations from FFXIV Collect.
+ * Returns a map of achievementId → FFXIVCollectData.
+ */
+export async function fetchFieldOperationsAchievementsData(): Promise<Record<number, FFXIVCollectData>> {
+  const ids = FIELD_OP_ACHIEVEMENT_IDS.join(',');
+  const res = await apiFetch(`${FFXIV_COLLECT_BASE}/achievements?id_in=${ids}`);
+  if (!res.ok) throw new Error(`Failed to fetch field operations achievements from FFXIV Collect (${res.status})`);
 
   const data = await res.json();
   const map: Record<number, FFXIVCollectData> = {};

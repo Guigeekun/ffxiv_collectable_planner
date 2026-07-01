@@ -67,7 +67,7 @@ function GridItemCard({ cell, characters, ownershipMap, cardSize, showLabel }: G
   return (
     <div
       className={`weapon-ach-card ${stateClass} ${modClass}`}
-      title={`${cell.label}${cell.globalOwned ? `\n${cell.globalOwned} of players own this` : ''}`}
+      title={`${cell.label}${cell.description ? `\n${cell.description}` : ''}${cell.globalOwned ? `\n${cell.globalOwned} of players own this` : ''}`}
     >
       <div className="weapon-card-icon-wrap" style={{ width: iconPx, height: iconPx }}>
         {cell.icon ? (

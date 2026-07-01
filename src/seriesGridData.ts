@@ -16,6 +16,8 @@ export interface GridCell {
   icon?: string;
   /** Global ownership percentage string from FFXIV Collect, e.g. "5.1%". */
   globalOwned?: string;
+  /** Description shown on hover. */
+  description?: string;
 }
 
 /** One column header in the grid (job / boss fight / etc.). */

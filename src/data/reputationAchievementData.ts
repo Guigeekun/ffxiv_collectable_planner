@@ -1009,6 +1009,7 @@ export function buildReputationAchievementGroups(collectables: Collectable[]): G
             label: achTemplate.name,
             icon: collectable?.iconUrl ?? achTemplate.icon,
             globalOwned: collectable?.globalOwned ?? achTemplate.owned,
+            description: collectable?.howTo ?? achTemplate.description,
           };
         })
       );
@@ -1027,6 +1028,7 @@ export function buildReputationAchievementGroups(collectables: Collectable[]): G
               label: q.name,
               icon: collectable?.iconUrl ?? q.icon,
               globalOwned: collectable?.globalOwned ?? q.owned,
+              description: collectable?.howTo ?? q.description,
             };
           }
           return null;
