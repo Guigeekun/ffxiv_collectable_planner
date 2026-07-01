@@ -167,24 +167,36 @@ export const FIELD_OP_GROUPS: FieldOpGroupData[] = [
         ]
       },
       {
-        "key": "actions_duels",
-        "header": "Actions/Duels",
-        "title": "Lost Actions & Duel Wins",
+        "key": "sf_duels",
+        "header": "SF Duels",
+        "title": "Southern Front Duels",
         "achmentIds": [
-          2686,
-          2880,
-          2881,
+          2683,
+          2684,
+          2685,
+          2686
         ]
       },
       {
-        "key": "support_map",
-        "header": "Support/Map",
-        "title": "Resurrects & Map Discovery",
+        "key": "zadnor_duels",
+        "header": "Zadnor Duels",
+        "title": "Zadnor Duels",
+        "achmentIds": [
+          2877,
+          2878,
+          2879,
+          2880
+        ]
+      },
+      {
+        "key": "support",
+        "header": "Support",
+        "title": "Resurrects",
         "achmentIds": [
           2691,
           2692,
           2693,
-
+          null
         ]
       },
       {
@@ -193,7 +205,9 @@ export const FIELD_OP_GROUPS: FieldOpGroupData[] = [
         "title": "Map Discovery",
         "achmentIds": [
           2891,
-          2620
+          2620,
+          null,
+          null
         ]
       },
       {
@@ -203,7 +217,7 @@ export const FIELD_OP_GROUPS: FieldOpGroupData[] = [
         "achmentIds": [
           2882,
           2883,
-          null,
+          2881,
           null
         ]
       }
