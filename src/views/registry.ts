@@ -109,16 +109,18 @@ export const VIEW_REGISTRY: ViewDefinition[] = [
       showCardLabels: false,
     },
   },
-  // Example future views — uncomment and fill fields as needed:
-  // {
-  //   id: 'achievements-crafting',
-  //   label: 'Crafting Tools',
-  //   icon: '🔨',
-  //   collectableType: 'achievements',
-  //   layout: 'series-grid',
-  //   dataSource: 'relic-weapons',
-  //   seriesFilter: ['Splendorous Tools', 'Skysteel Tools', 'Cosmic Tools'],
-  // },
+  {
+    id: 'achievements-crafters',
+    label: 'Crafters',
+    icon: '🔨',
+    collectableType: 'achievements',
+    layout: 'series-grid',
+    dataSource: 'crafter-achievements',
+    seriesGridConfig: {
+      cardSize: 'sm',
+      showCardLabels: false,
+    },
+  },
 ];
 
 /**
