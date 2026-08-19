@@ -63,8 +63,8 @@ export const RELIC_SERIES: Record<string, RelicSeriesData> = {
   },
   'Phantom Weapons': {
     jobs: ['PLD', 'MNK', 'WAR', 'DRG', 'BRD', 'NIN', 'DRK', 'MCH', 'WHM', 'BLM', 'SMN', 'SCH', 'AST', 'SAM', 'RDM', 'GNB', 'DNC', 'SGE', 'RPR', 'VPR', 'PCT'],
-    stages: ['Penumbrae', 'Umbrae', 'Obscurum'],
-    suffixes: ['Penumbrae', 'Umbrae', 'Obscurum'],
+    stages: ['Penumbrae', 'Umbrae', 'Obscurum', 'Eclipticum', 'Occultum'],
+    suffixes: ['Penumbrae', 'Umbrae', 'Obscurum', 'Eclipticum', 'Occultum'],
   },
   'Deep Dungeon Weapons': {
     jobs: ['PLD', 'MNK', 'WAR', 'DRG', 'BRD', 'NIN', 'DRK', 'MCH', 'WHM', 'BLM', 'SMN', 'SCH', 'AST', 'SAM', 'RDM', 'GNB', 'DNC', 'RPR', 'SGE', 'VPR', 'PCT'],
