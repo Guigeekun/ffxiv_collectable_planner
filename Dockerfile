@@ -10,10 +10,8 @@ COPY . .
 RUN npm run build
 
 # Production stage
-FROM caddy:2-alpine
+FROM nginx:alpine
 
-COPY --from=build /app/dist /usr/share/caddy
-COPY Caddyfile /etc/caddy/Caddyfile
+COPY --from=build /app/dist /usr/share/nginx/html
 
 EXPOSE 80
-EXPOSE 443

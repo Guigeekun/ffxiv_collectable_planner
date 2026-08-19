@@ -88,6 +88,7 @@ export function buildCrafterAchievementGroups(collectables: Collectable[]): Grid
     }
 
     for (const ach of achs) {
+      const description = ach.description as string | undefined;
       let colKey = '';
       let rowIdx = -1;
 
@@ -99,31 +100,31 @@ export function buildCrafterAchievementGroups(collectables: Collectable[]): Grid
         colKey = 'quality';
         const roman = ach.name.split(' ').pop() || '';
         rowIdx = romanToIdx(roman);
-      } else if (ach.description && ach.description.includes('Successfully synthesize')) {
+      } else if (description && description.includes('Successfully synthesize')) {
         colKey = 'synthesis';
-        const levelMatch = ach.description.match(/level\s+(\d+)-(\d+)/i);
+        const levelMatch = description.match(/level\s+(\d+)-(\d+)/i);
         if (levelMatch) {
           const startLevel = parseInt(levelMatch[1], 10);
           rowIdx = Math.floor(startLevel / 10);
         }
-      } else if (ach.description && (ach.description.includes('skyward score') || ach.description.includes('Ishgardian restoration'))) {
+      } else if (description && (description.includes('skyward score') || description.includes('Ishgardian restoration'))) {
         colKey = 'restoration';
-        if (ach.description.includes('skyward score')) {
+        if (description.includes('skyward score')) {
           const roman = ach.name.split(' ').pop() || '';
           rowIdx = romanToIdx(roman);
-        } else if (ach.description.includes('Ishgardian restoration')) {
-          if (ach.description.includes('second phase')) rowIdx = 3;
-          else if (ach.description.includes('third phase')) rowIdx = 4;
-          else if (ach.description.includes('fourth phase')) rowIdx = 5;
+        } else if (description.includes('Ishgardian restoration')) {
+          if (description.includes('second phase')) rowIdx = 3;
+          else if (description.includes('third phase')) rowIdx = 4;
+          else if (description.includes('fourth phase')) rowIdx = 5;
         }
-      } else if (ach.name.includes('Rocket') || ach.name.includes('with the Stars') || (ach.description && ach.description.includes('tool mastery'))) {
+      } else if (ach.name.includes('Rocket') || ach.name.includes('with the Stars') || (description && description.includes('tool mastery'))) {
         colKey = 'cosmic';
         if (ach.name.includes('Rocket')) {
           const roman = ach.name.split(' ').pop() || '';
           rowIdx = romanToIdx(roman);
         } else if (ach.name.includes('with the Stars')) {
           rowIdx = 2;
-        } else if (ach.description && ach.description.includes('tool mastery')) {
+        } else if (description && description.includes('tool mastery')) {
           rowIdx = 3;
         }
       } else if (ach.name.startsWith('Retooled:')) {
@@ -137,7 +138,7 @@ export function buildCrafterAchievementGroups(collectables: Collectable[]): Grid
           label: ach.name,
           icon: getIconUrl(ach.icon as string | number),
           globalOwned: ach.globalOwned as string || undefined,
-          description: ach.howTo || ach.description || undefined,
+          description: ach.howTo || description || undefined,
         };
       }
     }
