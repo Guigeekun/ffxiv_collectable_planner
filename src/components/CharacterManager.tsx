@@ -6,12 +6,13 @@ interface CharacterManagerProps {
   characters: Character[];
   loading: boolean;
   syncing: boolean;
+  syncProgress: { current: number; total: number } | null;
   onAdd: (id: string) => void;
   onRemove: (id: number) => void;
   onSync: () => void;
 }
 
-export default function CharacterManager({ characters, loading, syncing, onAdd, onRemove, onSync }: CharacterManagerProps) {
+export default function CharacterManager({ characters, loading, syncing, syncProgress, onAdd, onRemove, onSync }: CharacterManagerProps) {
   const [input, setInput] = useState('');
   const [adding, setAdding] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
@@ -113,7 +114,9 @@ export default function CharacterManager({ characters, loading, syncing, onAdd, 
                 disabled={syncing}
                 className={syncing ? 'syncing' : ''}
               >
-                {syncing ? 'Syncing...' : '🔄 Sync All'}
+                {syncing
+                  ? syncProgress ? `Syncing ${syncProgress.current}/${syncProgress.total}...` : 'Syncing...'
+                  : '🔄 Sync All'}
               </button>
               <div className="tooltip-wrapper">
                 <span className="tooltip-icon">ⓘ</span>

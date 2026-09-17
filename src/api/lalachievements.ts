@@ -13,9 +13,16 @@ async function fetchWithRetry(url: string, options?: RequestInit, retries = 1): 
   };
   const res = await fetch(url, mergedOptions);
   if (res.status === 403 && retries > 0) {
-    // If we get a 403, it might be a Cloudflare challenge. 
+    // If we get a 403, it might be a Cloudflare challenge.
     // Wait a bit and retry once, in case a parallel request set a cookie.
     await new Promise(resolve => setTimeout(resolve, 500));
+    return fetchWithRetry(url, options, retries - 1);
+  }
+  if (res.status === 429 && retries > 0) {
+    // The API allows 30 points per 15s window; wait it out before retrying.
+    const retryAfter = Number(res.headers.get('Retry-After'));
+    const waitMs = retryAfter > 0 ? retryAfter * 1000 : 16000;
+    await new Promise(resolve => setTimeout(resolve, waitMs));
     return fetchWithRetry(url, options, retries - 1);
   }
   return res;

@@ -23,6 +23,7 @@ interface UseCharactersReturn {
   charIds: number[];
   loading: boolean;
   syncing: boolean;
+  syncProgress: { current: number; total: number } | null;
   error: string | null;
   addCharacter: (id: number | string) => void;
   removeCharacter: (id: number | string) => void;
@@ -34,6 +35,7 @@ export function useCharacters(): UseCharactersReturn {
   const [characters, setCharacters] = useState<Character[]>([]);
   const [loading, setLoading] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [syncProgress, setSyncProgress] = useState<{ current: number; total: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   // Persist IDs
@@ -109,10 +111,13 @@ export function useCharacters(): UseCharactersReturn {
       const results: (Character | null)[] = [];
       for (let i = 0; i < charIds.length; i++) {
         const id = charIds[i];
+        // The API allows 30 points per 15s and each realtime sync costs 5,
+        // so space requests ~3s apart to stay under the limit.
         if (i > 0) {
-          await new Promise(resolve => setTimeout(resolve, 150));
+          await new Promise(resolve => setTimeout(resolve, 3000));
         }
-        
+        setSyncProgress({ current: i + 1, total: charIds.length });
+
         try {
           const char = await fetchCharacterRealtime(id);
           successCount++;
@@ -148,8 +153,9 @@ export function useCharacters(): UseCharactersReturn {
       addToast(msg, 'error');
     } finally {
       setSyncing(false);
+      setSyncProgress(null);
     }
   }, [charIds, addToast]);
 
-  return { characters, charIds, loading, syncing, error, addCharacter, removeCharacter, syncCharacters };
+  return { characters, charIds, loading, syncing, syncProgress, error, addCharacter, removeCharacter, syncCharacters };
 }

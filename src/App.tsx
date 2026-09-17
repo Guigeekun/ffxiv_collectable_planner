@@ -9,7 +9,7 @@ import ProfilePanel from './components/ProfilePanel';
 import type { Collectable, CollectableType, SourceTypeMap } from './types';
 
 export default function App() {
-  const { characters, loading: charsLoading, syncing: charsSyncing, addCharacter, removeCharacter, syncCharacters } = useCharacters();
+  const { characters, loading: charsLoading, syncing: charsSyncing, syncProgress: charsSyncProgress, addCharacter, removeCharacter, syncCharacters } = useCharacters();
   const [collectableType, setCollectableType] = useState<CollectableType>('mounts');
   const [collectables, setCollectables] = useState<Collectable[]>([]);
   const [sourceTypes, setSourceTypes] = useState<SourceTypeMap>({});
@@ -147,6 +147,7 @@ export default function App() {
             characters={characters}
             loading={charsLoading}
             syncing={charsSyncing}
+            syncProgress={charsSyncProgress}
             onAdd={addCharacter}
             onRemove={removeCharacter}
             onSync={syncCharacters}
