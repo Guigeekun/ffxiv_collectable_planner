@@ -59,7 +59,11 @@ export default function CharacterManager({ characters, loading, syncing, syncPro
       setShowSearchModal(true);
     } catch (err) {
       console.error('Failed to search characters:', err);
-      alert('Failed to search characters. Please try again.');
+      alert(
+        err instanceof DOMException && err.name === 'TimeoutError'
+          ? 'Search timed out — the Lodestone lookup is slow right now. Try again, or enter the Lodestone ID directly.'
+          : 'Failed to search characters. Please try again.'
+      );
     } finally {
       setIsSearching(false);
     }

@@ -92,7 +92,12 @@ export async function fetchCharacter(id: number | string, opts: { latest?: boole
  * vite.config.ts / nginx.conf) and parsed here.
  */
 export async function searchCharacters(text: string): Promise<CharacterSearchResult[]> {
-  const res = await fetch(`/characters/search?name=${encodeURIComponent(text)}`);
+  // When the name has no match in ffxivcollect's DB, their server falls back
+  // to a live Lodestone scrape, which can take several seconds — cap it so
+  // the UI can't stall indefinitely.
+  const res = await fetch(`/characters/search?name=${encodeURIComponent(text)}`, {
+    signal: AbortSignal.timeout(20000),
+  });
   if (!res.ok) throw new Error(`Search failed (${res.status})`);
   const html = await res.text();
   const doc = new DOMParser().parseFromString(html, 'text/html');
