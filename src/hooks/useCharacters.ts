@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { fetchCharacter } from '../api/lalachievements';
+import { fetchCharacter } from '../api/ffxivcollect';
 import { useToasts } from './useToasts';
 import type { Character } from '../types';
 
@@ -58,12 +58,12 @@ export function useCharacters(): UseCharactersReturn {
       const results: (Character | null)[] = [];
       for (let i = 0; i < charIds.length; i++) {
         if (cancelled) return;
-        
-        // Add a small delay between requests (stagger)
+
+        // Small stagger between characters to stay polite
         if (i > 0) {
           await new Promise(resolve => setTimeout(resolve, 150));
         }
-        
+
         const res = await fetchCharacter(charIds[i]).catch(() => null);
         results.push(res);
       }
@@ -100,27 +100,38 @@ export function useCharacters(): UseCharactersReturn {
 
   const syncCharacters = useCallback(async () => {
     if (charIds.length === 0) return;
-    
+
     setSyncing(true);
     setError(null);
-    let successCount = 0;
+    let updatedCount = 0;
+    let freshCount = 0;
     let rateLimited = false;
-    
+
+    const prevById = new Map(characters.map(c => [c.id, c]));
+
     try {
-      const { fetchCharacterRealtime } = await import('../api/lalachievements');
       const results: (Character | null)[] = [];
       for (let i = 0; i < charIds.length; i++) {
         const id = charIds[i];
-        // The API allows 30 points per 15s and each realtime sync costs 5,
-        // so space requests ~3s apart to stay under the limit.
+        // FFXIV Collect re-scrapes Lodestone synchronously (when the cached
+        // parse is >6h old), so each sync can take a few seconds. Keep a
+        // modest gap between characters.
         if (i > 0) {
-          await new Promise(resolve => setTimeout(resolve, 3000));
+          await new Promise(resolve => setTimeout(resolve, 750));
         }
         setSyncProgress({ current: i + 1, total: charIds.length });
 
         try {
-          const char = await fetchCharacterRealtime(id);
-          successCount++;
+          const char = await fetchCharacter(id, { latest: true });
+          const prev = prevById.get(id);
+          // A sync only produced new data if last_parsed advanced; an
+          // unchanged timestamp means the cached parse was <6h old or
+          // Lodestone had nothing new.
+          if (!prev || (typeof char.updatedAt === 'number' && typeof prev.updatedAt === 'number' && char.updatedAt > prev.updatedAt)) {
+            updatedCount++;
+          } else {
+            freshCount++;
+          }
           results.push(char);
         } catch (err: any) {
           if (err.message?.includes('429')) {
@@ -129,7 +140,7 @@ export function useCharacters(): UseCharactersReturn {
           results.push(null);
         }
       }
-      
+
       const updatedChars = results.filter((r): r is Character => r !== null);
       if (updatedChars.length > 0) {
         setCharacters(prev => {
@@ -141,8 +152,12 @@ export function useCharacters(): UseCharactersReturn {
 
       if (rateLimited) {
         addToast('Rate limit hit (429). Some characters were not updated.', 'error');
-      } else if (successCount > 0) {
-        addToast(`Successfully synced ${successCount} character${successCount > 1 ? 's' : ''}!`, 'success');
+      } else if (updatedCount > 0 && freshCount === 0) {
+        addToast(`Successfully synced ${updatedCount} character${updatedCount > 1 ? 's' : ''}!`, 'success');
+      } else if (updatedCount > 0) {
+        addToast(`Synced ${updatedCount} character${updatedCount > 1 ? 's' : ''}; ${freshCount} ${freshCount > 1 ? 'were' : 'was'} already up to date (FFXIV Collect re-scrapes at most every 6h).`, 'info');
+      } else if (freshCount > 0) {
+        addToast('All characters were already up to date (FFXIV Collect re-scrapes at most every 6h).', 'info');
       } else {
         addToast('No characters could be synced.', 'error');
       }
@@ -155,7 +170,7 @@ export function useCharacters(): UseCharactersReturn {
       setSyncing(false);
       setSyncProgress(null);
     }
-  }, [charIds, addToast]);
+  }, [charIds, characters, addToast]);
 
   return { characters, charIds, loading, syncing, syncProgress, error, addCharacter, removeCharacter, syncCharacters };
 }

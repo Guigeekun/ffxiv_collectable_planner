@@ -1,6 +1,24 @@
 import { useState } from 'react';
 import type { Character } from '../types';
-import { searchCharacters, CharacterSearchResult } from '../api/lalachievements';
+import { searchCharacters, type CharacterSearchResult } from '../api/ffxivcollect';
+
+function formatUpdatedAgo(updatedAt?: number): string {
+  if (!updatedAt) return 'unknown';
+  const seconds = Math.floor((Date.now() - updatedAt) / 1000);
+  const units: [number, string][] = [
+    [31536000, 'year'],
+    [2592000, 'month'],
+    [604800, 'week'],
+    [86400, 'day'],
+    [3600, 'hour'],
+    [60, 'minute'],
+  ];
+  for (const [unitSeconds, name] of units) {
+    const value = Math.floor(seconds / unitSeconds);
+    if (value >= 1) return `${value} ${name}${value > 1 ? 's' : ''} ago`;
+  }
+  return 'just now';
+}
 
 interface CharacterManagerProps {
   characters: Character[];
@@ -41,7 +59,11 @@ export default function CharacterManager({ characters, loading, syncing, syncPro
       setShowSearchModal(true);
     } catch (err) {
       console.error('Failed to search characters:', err);
-      alert('Failed to search characters. Please try again.');
+      alert(
+        err instanceof DOMException && err.name === 'TimeoutError'
+          ? 'Search timed out — the Lodestone lookup is slow right now. Try again, or enter the Lodestone ID directly.'
+          : 'Failed to search characters. Please try again.'
+      );
     } finally {
       setIsSearching(false);
     }
@@ -84,7 +106,7 @@ export default function CharacterManager({ characters, loading, syncing, syncPro
           <div className="tooltip-content">
             <strong>Character Search</strong>
             <p>Enter a name to search or a direct Lodestone ID.</p>
-            <p className="tooltip-warning">⚠ Name searches consume 3 API points.</p>
+            <p>Searches FFXIV Collect's tracked characters first, then falls back to a live Lodestone search.</p>
           </div>
         </div>
 
@@ -103,6 +125,12 @@ export default function CharacterManager({ characters, loading, syncing, syncPro
               <div className="char-info">
                 <span className="char-name">{char.name}</span>
                 <span className="char-world">{char.worldName} · {char.dcName}</span>
+                <span
+                  className="char-updated"
+                  title={char.updatedAt ? `Last updated: ${new Date(char.updatedAt).toLocaleString()}` : undefined}
+                >
+                  Updated {formatUpdatedAgo(char.updatedAt)}
+                </span>
               </div>
             </div>
           ))}
@@ -121,9 +149,9 @@ export default function CharacterManager({ characters, loading, syncing, syncPro
               <div className="tooltip-wrapper">
                 <span className="tooltip-icon">ⓘ</span>
                 <div className="tooltip-content">
-                  <strong>Realtime Sync</strong>
-                  <p>Fetches fresh data directly from Lodestone.</p>
-                  <p className="tooltip-warning">⚠ Consumes 5 API points per character.</p>
+                  <strong>Sync</strong>
+                  <p>Pulls fresh data from Lodestone via FFXIV Collect.</p>
+                  <p>Characters are re-scraped at most every 6 hours; fresher data is returned as-is.</p>
                 </div>
               </div>
             </div>
@@ -140,8 +168,8 @@ export default function CharacterManager({ characters, loading, syncing, syncPro
             </div>
 
             <div className="search-modal-disclaimer">
-              <p><strong>Note:</strong> This search only queries the Lalachievements database, not Lodestone directly.</p>
-              <p>If your character is missing, please look them up on <a href="https://lalachievements.com" target="_blank" rel="noreferrer">Lalachievements.com</a> first.</p>
+              <p><strong>Note:</strong> Search goes through FFXIV Collect — its tracked characters first, then a live Lodestone search.</p>
+              <p>If your character is missing, please enter their Lodestone ID directly.</p>
             </div>
 
             <div className="search-results-list">
@@ -153,7 +181,7 @@ export default function CharacterManager({ characters, loading, syncing, syncPro
                     <img src={char.iconUrl} alt={char.name} className="search-result-avatar" />
                     <div className="search-result-info">
                       <span className="search-result-name">{char.name}</span>
-                      <span className="search-result-id">ID: {char.id}</span>
+                      <span className="search-result-id">{char.worldName ? `${char.worldName} · ` : ''}ID: {char.id}</span>
                     </div>
                   </div>
                 ))
@@ -171,8 +199,8 @@ export default function CharacterManager({ characters, loading, syncing, syncPro
               <button className="search-modal-close" onClick={() => setOptionsChar(null)}>✕</button>
             </div>
             <div className="options-list">
-              <a href={`https://www.lalachievements.com/char/${optionsChar.id}/`} target="_blank" rel="noreferrer" className="option-btn">
-                View on Lalachievements
+              <a href={`https://ffxivcollect.com/characters/${optionsChar.id}`} target="_blank" rel="noreferrer" className="option-btn">
+                View on FFXIV Collect
               </a>
               <a href={`https://eu.finalfantasyxiv.com/lodestone/character/${optionsChar.id}/`} target="_blank" rel="noreferrer" className="option-btn">
                 View on Lodestone
