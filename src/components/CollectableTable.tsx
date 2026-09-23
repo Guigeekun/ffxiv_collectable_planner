@@ -14,7 +14,7 @@ import {
   type ExpandedState,
   type Column,
 } from '@tanstack/react-table';
-import type { Character, Collectable, CollectableRow, CollectableType, SourceTypeMap } from '../types';
+import type { Character, Collectable, CollectableRow, CollectableType, OwnedCollectionKey, SourceTypeMap } from '../types';
 
 function ColumnVisibilityPopover({ table }: { table: any }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -274,6 +274,18 @@ export default function CollectableTable({
     return map;
   }, [characters, collectableType]);
 
+  // Chars whose owned list for the active type is private on FFXIV Collect
+  // (titles are derived from achievements, so they follow the same flag).
+  // Their ownership is unknown — never counted as owned or missing.
+  const typeKey = (collectableType === 'titles' ? 'achievements' : collectableType) as OwnedCollectionKey;
+  const privateCharIds = useMemo(() => {
+    const ids = new Set<number>();
+    for (const char of characters) {
+      if (char.privateCollections?.includes(typeKey)) ids.add(char.id);
+    }
+    return ids;
+  }, [characters, typeKey]);
+
   // Unique values for filters
   const availableSources = useMemo(() => {
     const ids = new Set(collectables.map((c) => c.sourceTypeId));
@@ -292,11 +304,11 @@ export default function CollectableTable({
     return collectables.map((c) => {
       const idToCheck = (collectableType === 'titles' ? (c.achievementId as number) : (c.id as number));
       const missingCount = characters.filter(
-        (char) => !ownershipMap[char.id]?.has(idToCheck)
+        (char) => !privateCharIds.has(char.id) && !ownershipMap[char.id]?.has(idToCheck)
       ).length;
       return { ...c, missingCount };
     });
-  }, [collectables, characters, ownershipMap, collectableType]);
+  }, [collectables, characters, ownershipMap, privateCharIds, collectableType]);
 
   // Column definitions
   const columns = useMemo((): ColumnDef<CollectableRow>[] => {
@@ -538,28 +550,60 @@ export default function CollectableTable({
 
     // Per-character ownership columns
     for (const char of characters) {
+      const isPrivate = privateCharIds.has(char.id);
       cols.push({
         id: `char_${char.id}`,
         header: ({ column }) => (
           <div className="char-col-header" title={`${char.name} — ${char.worldName}`}>
             <img src={char.iconUrl} alt={char.name} className="char-col-avatar" />
             <div className="th-with-filter">
-              <span className="char-col-name">{char.name.split(' ')[0]}</span>
+              <span className="char-col-name">
+                {isPrivate && (
+                  <span
+                    className="char-col-lock"
+                    title={`${typeKey} are private on FFXIV Collect for this character — ownership is unknown`}
+                  >
+                    🔒
+                  </span>
+                )}
+                {char.name.split(' ')[0]}
+              </span>
               <FilterPopover
                 column={column}
                 title={char.name}
                 type="multi-select"
                 options={[
                   { label: 'Owned', value: 1 },
-                  { label: 'Missing', value: 0 }
+                  { label: 'Missing', value: 0 },
+                  ...(isPrivate ? [{ label: 'Unknown', value: -1 }] : []),
                 ]}
               />
             </div>
           </div>
         ),
         accessorFn: (row) => {
+          if (isPrivate) return -1;
           const idToCheck = (collectableType === 'titles' ? (row.achievementId as number) : (row.id as number));
           return ownershipMap[char.id]?.has(idToCheck) ? 1 : 0;
+        },
+        aggregationFn: (columnId, leafRows) => {
+          // Group rows aggregate by sum; a private collection's unknown (-1)
+          // values must propagate as unknown instead of a negative count.
+          if (isPrivate) return -1;
+          return leafRows.reduce((acc, row) => acc + (row.getValue<number>(columnId) ?? 0), 0);
+        },
+        aggregatedCell: (info) => {
+          // TanStack's default aggregatedCell prints the raw value, which
+          // would expose the -1 sentinel on collapsed group rows.
+          const val = info.getValue<number>();
+          if (val === -1) {
+            return (
+              <span className="owned-unknown" title="Private on FFXIV Collect — ownership unknown">
+                ?
+              </span>
+            );
+          }
+          return <>{val}</>;
         },
         size: 90,
         meta: { label: `Char: ${char.name}` },
@@ -569,6 +613,13 @@ export default function CollectableTable({
         },
         cell: (info) => {
           const val = info.getValue<number>();
+          if (val === -1) {
+            return (
+              <span className="owned-unknown" title="Private on FFXIV Collect — ownership unknown">
+                ?
+              </span>
+            );
+          }
           return (
             <span className={val ? 'owned-yes' : 'owned-no'}>
               {val ? '✓' : '✗'}
@@ -601,8 +652,9 @@ export default function CollectableTable({
         },
         cell: (info) => {
           const v = info.getValue<number>();
+          const knownChars = characters.length - privateCharIds.size;
           return (
-            <span className={`missing-count ${v === 0 ? 'missing-zero' : v === characters.length ? 'missing-all' : ''}`}>
+            <span className={`missing-count ${v === 0 ? 'missing-zero' : v === knownChars ? 'missing-all' : ''}`}>
               {v}
             </span>
           );
@@ -611,7 +663,7 @@ export default function CollectableTable({
     }
 
     return cols;
-  }, [characters, ownershipMap, sourceTypes, availableSources, availablePatches, collectableType]);
+  }, [characters, ownershipMap, privateCharIds, sourceTypes, availableSources, availablePatches, collectableType]);
 
   const table = useReactTable<CollectableRow>({
     data,

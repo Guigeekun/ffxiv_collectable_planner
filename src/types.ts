@@ -1,3 +1,6 @@
+// Collections with a per-character owned list on FFXIV Collect.
+export type OwnedCollectionKey = 'mounts' | 'minions' | 'achievements';
+
 // Character data, now served by FFXIV Collect (IDs are Lodestone IDs).
 export interface OwnedCollectable {
   id: number;
@@ -23,6 +26,12 @@ export interface Character {
   // A sync that returns the same updatedAt means the character was still
   // "fresh" (<6h) on FFXIV Collect's side, or Lodestone had nothing new.
   updatedAt?: number;
+  // Collections the character keeps private on FFXIV Collect (their /owned
+  // endpoint answers 403 "Collection is set to private"). Those lists come
+  // back empty; everything else is synced normally. Titles ownership is
+  // derived from achievements, so a private achievements list also affects
+  // the titles view.
+  privateCollections?: OwnedCollectionKey[];
   [key: string]: unknown;
 }
 

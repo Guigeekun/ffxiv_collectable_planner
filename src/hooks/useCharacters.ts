@@ -150,6 +150,14 @@ export function useCharacters(): UseCharactersReturn {
         });
       }
 
+      const privateCount = updatedChars.filter(c => (c.privateCollections?.length ?? 0) > 0).length;
+      if (privateCount > 0) {
+        addToast(
+          `🔒 ${privateCount} character${privateCount > 1 ? 's' : ''} keep some collections private on FFXIV Collect — that data can't be tracked.`,
+          'info'
+        );
+      }
+
       if (rateLimited) {
         addToast('Rate limit hit (429). Some characters were not updated.', 'error');
       } else if (updatedCount > 0 && freshCount === 0) {

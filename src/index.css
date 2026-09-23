@@ -374,6 +374,22 @@ body {
   color: var(--text-muted);
 }
 
+.char-updated {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  opacity: 0.85;
+}
+
+.char-private-badge {
+  font-size: 0.68rem;
+  color: var(--accent-gold);
+  background: rgba(232, 197, 71, 0.1);
+  border: 1px solid rgba(232, 197, 71, 0.35);
+  border-radius: 999px;
+  padding: 0.05rem 0.45rem;
+  cursor: help;
+}
+
 .char-remove-btn {
   background: none;
   border: none;
@@ -909,6 +925,19 @@ tbody tr:hover {
 .owned-no {
   color: var(--text-muted);
   font-size: 1rem;
+}
+
+.owned-unknown {
+  color: var(--accent-gold);
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: help;
+}
+
+.char-col-lock {
+  font-size: 0.6rem;
+  cursor: help;
+  margin-right: 2px;
 }
 
 /* Missing count */

@@ -20,6 +20,10 @@ function formatUpdatedAgo(updatedAt?: number): string {
   return 'just now';
 }
 
+function formatPrivateCollections(keys: NonNullable<Character['privateCollections']>): string {
+  return keys.map(k => k.charAt(0).toUpperCase() + k.slice(1)).join(', ');
+}
+
 interface CharacterManagerProps {
   characters: Character[];
   loading: boolean;
@@ -131,6 +135,14 @@ export default function CharacterManager({ characters, loading, syncing, syncPro
                 >
                   Updated {formatUpdatedAgo(char.updatedAt)}
                 </span>
+                {(char.privateCollections?.length ?? 0) > 0 && (
+                  <span
+                    className="char-private-badge"
+                    title={`${formatPrivateCollections(char.privateCollections!)} ${char.privateCollections!.length > 1 ? 'are' : 'is'} set to private on FFXIV Collect. This data can't be tracked and shows as unknown; everything else was loaded normally.`}
+                  >
+                    🔒 {formatPrivateCollections(char.privateCollections!)} private
+                  </span>
+                )}
               </div>
             </div>
           ))}
