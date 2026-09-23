@@ -1,5 +1,5 @@
 import { RELIC_SERIES, ALL_STAGE_SUFFIXES } from '../data/relicWeaponData';
-import type { Character, Collectable, CollectableType } from '../types';
+import type { Character, Collectable, CollectableType, OwnedCollectionKey } from '../types';
 
 const FFXIV_COLLECT_BASE = 'https://ffxivcollect.com/api';
 
@@ -48,12 +48,34 @@ export interface CharacterSearchResult {
 }
 
 /**
+ * Fetch one per-character owned list. Each collection can be private per
+ * character on FFXIV Collect — the endpoint then answers 403
+ * {"error":"Collection is set to private"}. That must not fail the whole
+ * character, so it returns `null` here and the caller records the
+ * collection as private; every other status still throws.
+ */
+async function fetchOwnedList(id: number | string, collection: OwnedCollectionKey): Promise<any[] | null> {
+  const res = await apiFetch(`${FFXIV_COLLECT_BASE}/characters/${id}/${collection}/owned`);
+  if (res.status === 403) return null;
+  if (!res.ok) {
+    throw new Error(`Failed to fetch ${collection} owned list for character ${id} from FFXIV Collect (${res.status})`);
+  }
+  const list = await res.json();
+  return Array.isArray(list) ? list : [];
+}
+
+/**
  * Fetch a character profile plus the owned lists the planner uses.
  *
  * With `{ latest: true }` FFXIV Collect synchronously re-scrapes Lodestone
  * first — but only if the character's last parse is older than 6 hours;
  * otherwise cached data comes back immediately. A fresh parse takes ~2-3s
  * and advances `last_parsed`.
+ *
+ * Privacy: FFXIV Collect lets each collection be hidden independently
+ * (commonly achievements). A private collection yields an empty owned list
+ * and is reported in `privateCollections` instead of failing the character
+ * — mounts, minions and everything public still load normally.
  */
 export async function fetchCharacter(id: number | string, opts: { latest?: boolean } = {}): Promise<Character> {
   const show = await fetchJson<any>(`/characters/${id}${opts.latest ? '?latest=true' : ''}`, `character ${id}`);
@@ -61,12 +83,17 @@ export async function fetchCharacter(id: number | string, opts: { latest?: boole
   // Titles are derived from achievements in this app (see CollectableTable),
   // so /titles/owned is not needed.
   const [mounts, minions, achievements] = await Promise.all([
-    fetchJson<any[]>(`/characters/${id}/mounts/owned`),
-    fetchJson<any[]>(`/characters/${id}/minions/owned`),
-    fetchJson<any[]>(`/characters/${id}/achievements/owned`),
+    fetchOwnedList(id, 'mounts'),
+    fetchOwnedList(id, 'minions'),
+    fetchOwnedList(id, 'achievements'),
   ]);
 
-  const toOwned = (list: any[]) => (Array.isArray(list) ? list.map((item) => ({ id: item.id })) : []);
+  const toOwned = (list: any[] | null) => (list ? list.map((item) => ({ id: item.id })) : []);
+
+  const privateCollections: OwnedCollectionKey[] = [];
+  if (mounts === null) privateCollections.push('mounts');
+  if (minions === null) privateCollections.push('minions');
+  if (achievements === null) privateCollections.push('achievements');
 
   return {
     id: show.id,
@@ -80,6 +107,7 @@ export async function fetchCharacter(id: number | string, opts: { latest?: boole
     minions: toOwned(minions),
     titles: [],
     achievements: toOwned(achievements),
+    privateCollections,
     // Unix ms of FFXIV Collect's last completed Lodestone parse.
     updatedAt: show.last_parsed ? Date.parse(show.last_parsed) : undefined,
   } as Character;
