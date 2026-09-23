@@ -1,8 +1,6 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useCharacters } from './hooks/useCharacters';
-import { fetchCollectables, fetchSourceTypes } from './api/lalachievements';
-import { fetchAchievementCategories } from './api/xivapi';
-import { fetchMountData, fetchMinionData, fetchRelicWeaponsData, fetchReputationAchievementsData, fetchFieldOperationsAchievementsData, type FFXIVCollectData, type RelicWeaponEntry } from './api/ffxivcollect';
+import { fetchCollectables, fetchRelicWeaponsData, type RelicWeaponEntry } from './api/ffxivcollect';
 import CharacterManager from './components/CharacterManager';
 import ViewHost from './components/ViewHost';
 import ProfilePanel from './components/ProfilePanel';
@@ -13,88 +11,42 @@ export default function App() {
   const [collectableType, setCollectableType] = useState<CollectableType>('mounts');
   const [collectables, setCollectables] = useState<Collectable[]>([]);
   const [sourceTypes, setSourceTypes] = useState<SourceTypeMap>({});
-  const [achievementCategories, setAchievementCategories] = useState<SourceTypeMap>({});
-  const [mountData, setMountData] = useState<Record<number, FFXIVCollectData>>({});
-  const [minionData, setMinionData] = useState<Record<number, FFXIVCollectData>>({});
   const [relicWeaponsData, setRelicWeaponsData] = useState<Record<number, RelicWeaponEntry>>({});
-  const [reputationAchievementsData, setReputationAchievementsData] = useState<Record<number, FFXIVCollectData>>({});
-  const [fieldOpsAchievementsData, setFieldOpsAchievementsData] = useState<Record<number, FFXIVCollectData>>({});
   const [loadingData, setLoadingData] = useState(true);
 
-  // Fetch source types and mount icons once
+  // Fetch relic weapon data once (the one enrichment pass still needed,
+  // since relics map achievements to series/stages for the grid view)
   useEffect(() => {
-    Promise.all([fetchSourceTypes(), fetchAchievementCategories()])
-      .then(([st, ac]) => {
-        setSourceTypes(st);
-        setAchievementCategories(ac);
-      })
-      .catch((err) => console.error('Failed to load categories:', err));
-
-    fetchMountData()
-      .then(setMountData)
-      .catch((err) => console.error('Failed to load mount data:', err));
-
-    fetchMinionData()
-      .then(setMinionData)
-      .catch((err) => console.error('Failed to load minion data:', err));
-
     fetchRelicWeaponsData()
       .then(setRelicWeaponsData)
       .catch((err) => console.error('Failed to load relic weapons data:', err));
-
-    fetchReputationAchievementsData()
-      .then(setReputationAchievementsData)
-      .catch((err) => console.error('Failed to load reputation achievements data:', err));
-
-    fetchFieldOperationsAchievementsData()
-      .then(setFieldOpsAchievementsData)
-      .catch((err) => console.error('Failed to load field operations achievements data:', err));
   }, []);
 
-  // Fetch collectables when type changes
+  // Fetch collectables when type changes; FFXIV Collect ships icons,
+  // ownership % and source info inline, and the source-type names are
+  // derived from the same payload.
   useEffect(() => {
+    let cancelled = false;
     setLoadingData(true);
     fetchCollectables(collectableType)
       .then((data) => {
+        if (cancelled) return;
         setCollectables(data);
+        const st: SourceTypeMap = {};
+        for (const c of data) {
+          if (c.sourceTypeId != null && c.sourceTypeName) {
+            st[c.sourceTypeId] = c.sourceTypeName;
+          }
+        }
+        setSourceTypes(st);
         setLoadingData(false);
       })
       .catch((err) => {
         console.error(`Failed to load ${collectableType}:`, err);
-        setLoadingData(false);
+        if (!cancelled) setLoadingData(false);
       });
+    return () => { cancelled = true; };
   }, [collectableType]);
-
-  const activeSourceTypes = (() => {
-    if (collectableType === 'achievements') return achievementCategories;
-    if (collectableType === 'titles') return { 1: 'Achievement' };
-    return sourceTypes;
-  })();
-
-  const enrichedCollectables = useMemo(() => {
-    if (collectableType === 'mounts') {
-      return collectables.map(c => ({
-        ...c,
-        iconUrl: mountData[c.id as number]?.icon,
-        globalOwned: mountData[c.id as number]?.owned
-      }));
-    }
-    if (collectableType === 'minions') {
-      return collectables.map(c => ({
-        ...c,
-        iconUrl: minionData[c.id as number]?.icon,
-        globalOwned: minionData[c.id as number]?.owned
-      }));
-    }
-    if (collectableType === 'achievements') {
-      return collectables.map(c => ({
-        ...c,
-        iconUrl: reputationAchievementsData[c.id as number]?.icon || fieldOpsAchievementsData[c.id as number]?.icon,
-        globalOwned: reputationAchievementsData[c.id as number]?.owned || fieldOpsAchievementsData[c.id as number]?.owned
-      }));
-    }
-    return collectables;
-  }, [collectables, collectableType, mountData, minionData, reputationAchievementsData, fieldOpsAchievementsData]);
 
   return (
     <div className="app">
@@ -156,9 +108,9 @@ export default function App() {
 
         <section className="table-section">
           <ViewHost
-            collectables={enrichedCollectables}
+            collectables={collectables}
             characters={characters}
-            sourceTypes={activeSourceTypes}
+            sourceTypes={sourceTypes}
             loading={loadingData}
             collectableType={collectableType}
             relicWeaponsData={relicWeaponsData}
