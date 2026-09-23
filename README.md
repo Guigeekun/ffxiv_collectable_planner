@@ -3,7 +3,7 @@
 
 Tool to plan your next collectable farm for your party in Final Fantasy XIV.
 
-Live demo: [https://ffxivcollect.ggkfigment.fr](https://ffxivcollect.ggkfigment.fr)
+Live demo: [https://ffcollect.ggkfigment.fr/](https://ffcollect.ggkfigment.fr/)
 
 ## Features
 
